@@ -171,7 +171,7 @@ mesasContainer.addEventListener('click', async (e) => {
   const pos = parseInt(btn.dataset.pos, 10);
   const max = totalMenus();
 
-  // 1️⃣ Buscar si este asiento ya pertenece al invitado
+  // Buscar si este asiento ya pertenece al invitado
   const { data: asientoExistente, error: qErr } = await supabase
     .from('mesa_asientos')
     .select('*')
@@ -185,7 +185,7 @@ mesasContainer.addEventListener('click', async (e) => {
     return;
   }
 
-  // 2️⃣ Si es tu asiento, intentar liberarlo
+  // 🔹 Si es tu asiento, intentar liberarlo
   if (asientoExistente?.invitado_id === invitado.id) {
     const cambios = asientoExistente.cambios || 0;
 
@@ -202,8 +202,15 @@ mesasContainer.addEventListener('click', async (e) => {
         .eq('id', asientoExistente.id);
 
       if (error) throw error;
+
+      // ✅ Remover del array local
+      asientosSeleccionados = asientosSeleccionados.filter(
+        (a) => !(a.mesa_id === mesaId && a.posicion === pos)
+      );
+
       ui.close();
       ui.success('Asiento liberado correctamente.');
+      renderHeader(); // 🔁 refrescar contador
       await cargarMesas();
     } catch (err) {
       ui.close();
@@ -213,19 +220,19 @@ mesasContainer.addEventListener('click', async (e) => {
     return;
   }
 
-  // 3️⃣ Si está ocupado por otro, no permitir selección
+  // 🔸 Si está ocupado por otro, no permitir selección
   if (asientoExistente?.invitado_id && asientoExistente.invitado_id !== invitado.id) {
     ui.info('Ese asiento ya está ocupado.');
     return;
   }
 
-  // 4️⃣ Controlar límite total de asientos
+  // 🔸 Controlar límite total de asientos
   if (asientosSeleccionados.length >= max) {
     ui.info('Ya seleccionaste todos tus asientos disponibles.');
     return;
   }
 
-  // 5️⃣ Asiento libre → asignar
+  // 🔹 Asiento libre → asignar
   ui.loading('Guardando tu selección...');
   try {
     let query;
@@ -245,9 +252,12 @@ mesasContainer.addEventListener('click', async (e) => {
     const { error } = await query;
     if (error) throw error;
 
+    // ✅ Agregar al array local
     asientosSeleccionados.push({ mesa_id: mesaId, posicion: pos });
+
     ui.close();
     ui.success('Asiento seleccionado correctamente.');
+    renderHeader(); // 🔁 refrescar contador
     await cargarMesas();
   } catch (err) {
     ui.close();
@@ -255,5 +265,6 @@ mesasContainer.addEventListener('click', async (e) => {
     ui.error('No se pudo guardar tu selección.');
   }
 });
+
 
 cargarMesas();
