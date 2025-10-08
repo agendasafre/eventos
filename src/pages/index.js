@@ -86,6 +86,7 @@ dniInput.addEventListener('blur', async () => {
     if (data.retiro === true) {
       dniValido = false;
       actualizarUI();
+      form.reset();
       return ui.info('Este DNI ya retiró su entrada.');
     }
 

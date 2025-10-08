@@ -61,6 +61,7 @@ export default async function handler(req, res) {
       .update({
         nombre,
         correo,
+        acepto_terminos: true,
         lugar_trabajo: lugar,
         opciones: total,
         opciones_comun: numComun,
