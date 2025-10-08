@@ -120,7 +120,7 @@ function renderMesas() {
   mesas.forEach((mesa) => {
     const div = document.createElement('div');
     div.className =
-      'bg-white/90 rounded-2xl shadow-md p-5 flex flex-col items-center text-center transition-transform hover:scale-105';
+      'bg-white/90 rounded-2xl shadow-md p-5 flex flex-col items-center text-center transition-transform hover:scale-105 m-2';
     div.innerHTML = `
       <h2 class="text-azuloscuro font-bold mb-4">Mesa ${mesa.numero}</h2>
       <div class="grid grid-cols-4 gap-3">
@@ -161,8 +161,8 @@ function renderAsientos(mesa) {
       let icon = ocupado
         ? '<i class="fa-solid fa-user-slash"></i>'
         : esTuAsiento
-          ? '<i class="fa-solid fa-star"></i>'
-          : '<i class="fa-solid fa-chair"></i>';
+          ? '<i class="fa-solid fa-star text-yellow-400"></i>'
+          : '<i class="fa-solid fa-chair text-amber-800"></i>';
 
       const nombre = ocupado
         ? a.invitados?.nombre || 'Ocupado'
@@ -212,7 +212,7 @@ mesasContainer.addEventListener('click', async (e) => {
 
   if (qErr) {
     console.error(qErr);
-    ui.error('No se pudo verificar el estado del asiento.');
+    ui.error('No se pudo verificar el estado del asiento');
     return;
   }
 
@@ -220,7 +220,7 @@ mesasContainer.addEventListener('click', async (e) => {
   if (asientoExistente?.invitado_id === invitado.id) {
     const cambios = asientoExistente.cambios || 0;
     if (cambios >= 2) {
-      ui.info('Ya no podés cambiar este asiento más de 2 veces.');
+      ui.info('No podés cambiar este asiento más de 2 veces');
       return;
     }
 
@@ -237,26 +237,26 @@ mesasContainer.addEventListener('click', async (e) => {
       );
 
       ui.close();
-      ui.success('Asiento liberado. Elegí un nuevo lugar.');
+      ui.success('Asiento liberado. Elegí un nuevo lugar');
       renderHeader();
       await cargarMesas();
     } catch (err) {
       ui.close();
       console.error(err);
-      ui.error('Error al liberar el asiento.');
+      ui.error('Error al liberar el asiento');
     }
     return;
   }
 
   // Si ocupado por otro
   if (asientoExistente?.invitado_id && asientoExistente.invitado_id !== invitado.id) {
-    ui.info('Ese asiento ya está ocupado.');
+    ui.info('Ese asiento ya está ocupado');
     return;
   }
 
   // Control de cantidad de asientos disponibles
   if (!pendingMove && asientosSeleccionados.length >= max) {
-    ui.info('Ya seleccionaste todos tus asientos disponibles.');
+    ui.info('Ya seleccionaste todos tus asientos disponibles');
     return;
   }
 
@@ -294,14 +294,14 @@ mesasContainer.addEventListener('click', async (e) => {
     }
 
     ui.close();
-    ui.success('Asiento guardado correctamente.');
+    ui.success('Asiento guardado correctamente');
     await cargarMesas();
     recalcularAsientosSeleccionados();
     renderHeader();
   } catch (err) {
     ui.close();
     console.error(err);
-    ui.error('No se pudo guardar tu selección.');
+    ui.error('No se pudo guardar tu selección');
   }
 });
 
