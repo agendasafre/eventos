@@ -80,6 +80,8 @@ dniInput.addEventListener('blur', async () => {
     if (error || !data) {
       dniValido = false;
       actualizarUI();
+      form.reset();
+      dniInput.focus();
       return ui.error('DNI no habilitado.');
     }
 
@@ -100,6 +102,7 @@ dniInput.addEventListener('blur', async () => {
     actualizarUI();
     ui.error('Error al verificar el DNI.');
     form.reset();
+    dniInput.focus();
     console.error(err);
   }
 });
@@ -135,3 +138,4 @@ form.addEventListener('submit', async (e) => {
 submitBtn.disabled = true;
 actualizarUI();
 $('#anio').textContent = new Date().getFullYear();
+dniInput.focus();
