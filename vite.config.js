@@ -1,0 +1,17 @@
+import { defineConfig } from 'vite';
+import { resolve } from 'path';
+
+export default defineConfig({
+  root: '.',
+  build: {
+    outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        retiro: resolve(__dirname, 'retiro.html'),
+        mesas: resolve(__dirname, 'mesas.html'),
+        sorteo: resolve(__dirname, 'sorteo.html'),
+      },
+    },
+  },
+});

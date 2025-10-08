@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Retiro de Entradas – Cena UNSJ</title>
+    <link rel="icon" type="image/webp" href="/assets/logo-C-Xvo68V.webp" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" crossorigin src="/assets/retiro-aC6n5DWW.js"></script>
+    <link rel="modulepreload" crossorigin href="/assets/ui-Q70j82VI.js">
+    <link rel="stylesheet" crossorigin href="/assets/ui-Cy4G-HsR.css">
+  </head>
+
+  <body class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste flex items-center justify-center p-6">
+    <main class="w-full max-w-2xl bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
+      <header class="bg-azuloscuro text-crema text-center py-8 px-6">
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">🎟️ Retiro de Entradas</h1>
+        <p class="text-celeste text-sm mt-1">Cena de Fin de Año – Rectorado UNSJ</p>
+      </header>
+
+      <form id="form" class="p-8 space-y-6">
+        <div>
+          <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">
+            DNI <span class="text-gray-500">(sin puntos ni espacios)</span>
+          </label>
+          <input
+            type="text"
+            id="dni"
+            name="dni"
+            placeholder="Ej: 12345678"
+            required
+            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
+          />
+        </div>
+
+        <section id="retiroSection" class="hidden space-y-4">
+          <div class="bg-celeste/10 border border-celeste rounded-lg p-4">
+            <h2 class="font-semibold text-azuloscuro text-lg mb-3">🍽️ Menús a retirar</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Común</label>
+                <input
+                  type="number"
+                  id="comun"
+                  name="comun"
+                  min="0"
+                  placeholder="0"
+                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro 
+                  p-1 
+                  text-azuloscuro 
+                  transition"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Celíacos</label>
+                <input
+                  type="number"
+                  id="celiacos"
+                  name="celiacos"
+                  min="0"
+                  placeholder="0"
+                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Vegetarianos</label>
+                <input
+                  type="number"
+                  id="vegetarianos"
+                  name="vegetarianos"
+                  min="0"
+                  placeholder="0"
+                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700">Veganos</label>
+                <input
+                  type="number"
+                  id="veganos"
+                  name="veganos"
+                  min="0"
+                  placeholder="0"
+                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
+                />
+              </div>
+            </div>
+          </div>
+
+          <button
+            id="submitBtn"
+            type="submit"
+            disabled
+            class="w-full py-3 text-lg font-semibold rounded-lg bg-azuloscuro text-white hover:bg-azul transition disabled:bg-gray-400 disabled:cursor-not-allowed focus:ring-2 focus:ring-azul/40"
+          >
+            Confirmar retiro
+          </button>
+        </section>
+      </form>
+
+      <footer class="text-center py-6 bg-crema/80 text-gray-700 text-sm">
+        <p>Universidad Nacional de San Juan<br>
+        - Rectorado -<br>
+        <span id="anio"></span>
+        </p>
+      </footer>
+    </main>
+
+  </body>
+</html>
