@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cena de Fin de Año – UNSJ</title>
+    <link rel="icon" type="image/webp" href="./assets/logo.webp" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script type="module" crossorigin src="/assets/index-CNgabxG3.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CZTY5Vud.css">
+  </head>
+
+  <body class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste flex items-center justify-center p-6">
+    <main class="w-full max-w-2xl bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
+      <!-- Header -->
+      <header class="bg-azuloscuro text-crema text-center py-8 px-6">
+        <img src="./assets/logo-blanco.webp" alt="Logo UNSJ" class="w-20 mx-auto mb-3" />
+        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">🎉 Cena de Fin de Año – UNSJ 🎉</h1>
+        <p class="text-celeste text-sm mt-1">Rectorado · Universidad Nacional de San Juan</p>
+      </header>
+
+      <!-- Formulario -->
+      <form id="form" class="p-8 space-y-6">
+        <!-- DNI -->
+        <div>
+          <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">
+            DNI <span class="text-gray-500">(sin puntos ni espacios)</span>
+          </label>
+          <input
+            type="number"
+            id="dni"
+            name="dni"
+            placeholder="Ej: 12345678"
+            required
+            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition "
+          />
+        </div>
+
+        <!-- Nombre -->
+        <div>
+          <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre y Apellido</label>
+          <input
+            type="text"
+            id="nombre"
+            name="nombre"
+            placeholder="Tu nombre completo"
+            required
+            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
+          />
+        </div>
+ 
+        <!-- Correo -->
+        <div>
+          <label for="correo" class="block text-sm font-medium text-gray-700 mb-1 ">Correo electrónico</label>
+          <input
+            type="email"
+            id="correo"
+            name="correo"
+            placeholder="tu@mail.com"
+            required
+            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
+          />
+        </div>
+
+        <!-- Lugar -->
+        <div>
+          <label for="lugar" class="block text-sm font-medium text-gray-700 mb-1">Lugar de trabajo</label>
+          <select
+            id="lugar"
+            name="lugar"
+            required
+            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
+          >
+            <option value="" disabled selected>Seleccioná tu lugar de trabajo</option>
+            <option value="Rectorado">Rectorado</option>
+            <option value="Facultad de Ciencias Exactas, Físicas y Naturales">Facultad de Ciencias Exactas, Físicas y Naturales</option>
+            <option value="Facultad de Ingeniería">Facultad de Ingeniería</option>
+            <option value="Facultad de Ciencias Sociales">Facultad de Ciencias Sociales</option>
+            <option value="Facultad de Filosofía, Humanidades y Artes">Facultad de Filosofía, Humanidades y Artes</option>
+            <option value="Facultad de Arquitectura, Urbanismo y Diseño">Facultad de Arquitectura, Urbanismo y Diseño</option>
+            <option value="Escuela Universitaria de Ciencias de la Salud">Escuela Universitaria de Ciencias de la Salud</option>
+            <option value='IPU - Escuela Industrial "Domingo F. Sarmiento"'>IPU - Escuela Industrial "Domingo F. Sarmiento"</option>
+            <option value='IPU - Escuela de Comercio "Lib. Gral. San Martín"'>IPU - Escuela de Comercio "Lib. Gral. San Martín"</option>
+            <option value='IPU - Colegio Central Universitario "Mariano Moreno"'>IPU - Colegio Central Universitario "Mariano Moreno"</option>
+          </select>
+        </div>
+
+        <!-- Menús -->
+        <section class="border border-gray-200 rounded-xl p-5 bg-crema/20">
+          <h2 class="text-lg font-semibold text-azuloscuro mb-3 flex items-center gap-2">
+            🍽️ Menús
+          </h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Común / Tradicional</label>
+              <input
+                type="number"
+                id="comun"
+                name="comun"
+                min="0"
+                placeholder="0"
+                class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1 text-azuloscuro transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Celíacos</label>
+              <input
+                type="number"
+                id="celiacos"
+                name="celiacos"
+                min="0"
+                placeholder="0"
+                class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1 text-azuloscuro transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Vegetarianos</label>
+              <input
+                type="number"
+                id="vegetarianos"
+                name="vegetarianos"
+                min="0"
+                placeholder="0"
+                class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1 text-azuloscuro transition"
+              />
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Veganos</label>
+              <input
+                type="number"
+                id="veganos"
+                name="veganos"
+                min="0"
+                placeholder="0"
+                class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1 text-azuloscuro transition"
+              />
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-700 mt-3">
+            Total de menús: <b id="totalNum">0</b>
+          </p>
+          <p id="errorMsg" class="hidden text-sm font-semibold text-rojo mt-1">
+            La cantidad total debe ser al menos 1.
+          </p>
+        </section>
+
+        <!-- Aviso -->
+        <div class="bg-rojo/20 border border-rojo rounded-lg p-4">
+          <h3 class="font-semibold text-azuloscuro text-lg flex items-center gap-2">
+            ⚠️ Importante
+          </h3>
+          <p class="text-gray-800 text-sm mt-2 leading-relaxed">
+            Al enviar este formulario, <strong>aceptás el descuento</strong> del total de las opciones seleccionadas directamente por planilla de haberes,
+            <strong>en 4 cuotas iguales</strong>.
+          </p>
+          <p class="text-gray-800 text-sm mt-1">
+            <strong>El valor de cada opción es de $50.000</strong>.
+          </p>
+        </div>
+
+        <!-- Botón -->
+        <button
+          id="submitBtn"
+          type="submit"
+          disabled
+          class="w-full py-3 text-lg font-semibold rounded-lg bg-azuloscuro text-white hover:bg-azul transition disabled:bg-gray-400 disabled:cursor-not-allowed focus:ring-2 focus:ring-azul/40"
+        >
+          Enviar inscripción
+        </button>
+      </form>
+
+      <!-- Footer -->
+      <footer class="text-center py-6 bg-crema/80 text-gray-700 text-sm">
+        <p>© <span id="anio"></span> · Rectorado – Universidad Nacional de San Juan</p>
+      </footer>
+    </main>
+
+  </body>
+</html>
