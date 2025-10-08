@@ -5,6 +5,7 @@ const $ = (s, p = document) => p.querySelector(s);
 const mesasContainer = $('#mesasContainer');
 $('#anio').textContent = new Date().getFullYear();
 
+// Token del invitado
 const token = new URLSearchParams(window.location.search).get('token');
 if (!token) {
   ui.error('No se encontró el token de acceso.');
@@ -16,37 +17,9 @@ ui.loading('Cargando mesas...');
 let invitado = null;
 let mesas = [];
 let asientosSeleccionados = [];
+let pendingMove = null; // guardamos el asiento liberado pendiente de mover
 
-async function cargarMesas() {
-  try {
-    // 1️⃣ Obtener invitado
-    const { data: user, error: userErr } = await supabase
-      .from('invitados')
-      .select('*')
-      .eq('mesa_token', token)
-      .maybeSingle();
-    if (userErr || !user) throw new Error('Token inválido');
-    invitado = user;
-
-    // 2️⃣ Obtener mesas y ocupaciones
-    const { data: dataMesas, error: mesasErr } = await supabase
-      .from('mesas')
-      .select('id, numero, capacidad, mesa_asientos (id, posicion, invitado_id, invitados(nombre))')
-      .order('numero', { ascending: true });
-
-    if (mesasErr) throw mesasErr;
-
-    mesas = dataMesas || [];
-    ui.close();
-    renderHeader();
-    renderMesas();
-  } catch (err) {
-    ui.close();
-    console.error(err);
-    ui.error('Error al cargar las mesas.');
-  }
-}
-
+// ---- Helpers ----
 function totalMenus() {
   return (
     (invitado.opciones_comun || 0) +
@@ -54,6 +27,23 @@ function totalMenus() {
     (invitado.opciones_vegetarianos || 0) +
     (invitado.opciones_veganos || 0)
   );
+}
+
+function recalcularAsientosSeleccionados() {
+  asientosSeleccionados = [];
+  for (const mesa of mesas) {
+    const arr = mesa.mesa_asientos || [];
+    for (const a of arr) {
+      if (a?.invitado_id === invitado.id) {
+        asientosSeleccionados.push({
+          mesa_id: mesa.id,
+          posicion: a.posicion,
+          id: a.id,
+          cambios: a.cambios || 0,
+        });
+      }
+    }
+  }
 }
 
 function renderHeader() {
@@ -82,12 +72,55 @@ function renderHeader() {
   mesasContainer.before(div);
 }
 
+// ---- Cargar mesas e invitado ----
+async function cargarMesas() {
+  try {
+    const { data: user, error: userErr } = await supabase
+      .from('invitados')
+      .select('*')
+      .eq('mesa_token', token)
+      .maybeSingle();
+
+    if (userErr || !user) throw new Error('Token inválido');
+    invitado = user;
+
+    const { data: dataMesas, error: mesasErr } = await supabase
+      .from('mesas')
+      .select(`
+        id,
+        numero,
+        capacidad,
+        mesa_asientos (
+          id,
+          posicion,
+          invitado_id,
+          cambios,
+          invitados ( nombre )
+        )
+      `)
+      .order('numero', { ascending: true });
+
+    if (mesasErr) throw mesasErr;
+
+    mesas = dataMesas || [];
+    recalcularAsientosSeleccionados();
+    ui.close();
+    renderHeader();
+    renderMesas();
+  } catch (err) {
+    ui.close();
+    console.error(err);
+    ui.error('Error al cargar las mesas.');
+  }
+}
+
+// ---- Renderizado ----
 function renderMesas() {
   mesasContainer.innerHTML = '';
   mesas.forEach((mesa) => {
     const div = document.createElement('div');
     div.className =
-      'bg-white/90 rounded-2xl shadow-md p-5 flex flex-col items-center text-center transition-transform hover:scale-105 m-2';
+      'bg-white/90 rounded-2xl shadow-md p-5 flex flex-col items-center text-center transition-transform hover:scale-105';
     div.innerHTML = `
       <h2 class="text-azuloscuro font-bold mb-4">Mesa ${mesa.numero}</h2>
       <div class="grid grid-cols-4 gap-3">
@@ -137,11 +170,10 @@ function renderAsientos(mesa) {
           ? 'Tu asiento'
           : 'Disponible';
 
-      // 🔥 Mostrar nombre completo si ocupado o propio
       const label =
         ocupado || esTuAsiento
           ? `<p class="text-sm text-gray-800 mt-1 text-center max-w-[120px] leading-tight">${esTuAsiento ? 'Vos' : a.invitados?.nombre || '—'}</p>`
-          : '<p class="text-sm text-transparent mt-1 max-w-[120px] leading-tight">.</p>'; // mantiene altura uniforme
+          : '<p class="text-sm text-transparent mt-1 max-w-[120px] leading-tight">.</p>';
 
       return `
         <div class="flex flex-col items-center justify-center text-center">
@@ -161,8 +193,7 @@ function renderAsientos(mesa) {
     .join('');
 }
 
-
-
+// ---- Lógica de selección y cambios ----
 mesasContainer.addEventListener('click', async (e) => {
   const btn = e.target.closest('.asiento');
   if (!btn || btn.disabled) return;
@@ -171,7 +202,7 @@ mesasContainer.addEventListener('click', async (e) => {
   const pos = parseInt(btn.dataset.pos, 10);
   const max = totalMenus();
 
-  // Buscar si este asiento ya pertenece al invitado
+  // Buscar asiento actual en DB
   const { data: asientoExistente, error: qErr } = await supabase
     .from('mesa_asientos')
     .select('*')
@@ -185,10 +216,9 @@ mesasContainer.addEventListener('click', async (e) => {
     return;
   }
 
-  // 🔹 Si es tu asiento, intentar liberarlo
+  // Si es tu asiento -> liberar (para cambiar)
   if (asientoExistente?.invitado_id === invitado.id) {
     const cambios = asientoExistente.cambios || 0;
-
     if (cambios >= 2) {
       ui.info('Ya no podés cambiar este asiento más de 2 veces.');
       return;
@@ -196,21 +226,19 @@ mesasContainer.addEventListener('click', async (e) => {
 
     ui.loading('Liberando asiento...');
     try {
-      const { error } = await supabase
+      await supabase
         .from('mesa_asientos')
-        .update({ invitado_id: null, cambios: cambios + 1 })
+        .update({ invitado_id: null })
         .eq('id', asientoExistente.id);
 
-      if (error) throw error;
-
-      // ✅ Remover del array local
+      pendingMove = { id: asientoExistente.id, cambios };
       asientosSeleccionados = asientosSeleccionados.filter(
         (a) => !(a.mesa_id === mesaId && a.posicion === pos)
       );
 
       ui.close();
-      ui.success('Asiento liberado correctamente.');
-      renderHeader(); // 🔁 refrescar contador
+      ui.success('Asiento liberado. Elegí un nuevo lugar.');
+      renderHeader();
       await cargarMesas();
     } catch (err) {
       ui.close();
@@ -220,51 +248,61 @@ mesasContainer.addEventListener('click', async (e) => {
     return;
   }
 
-  // 🔸 Si está ocupado por otro, no permitir selección
+  // Si ocupado por otro
   if (asientoExistente?.invitado_id && asientoExistente.invitado_id !== invitado.id) {
     ui.info('Ese asiento ya está ocupado.');
     return;
   }
 
-  // 🔸 Controlar límite total de asientos
-  if (asientosSeleccionados.length >= max) {
+  // Control de cantidad de asientos disponibles
+  if (!pendingMove && asientosSeleccionados.length >= max) {
     ui.info('Ya seleccionaste todos tus asientos disponibles.');
     return;
   }
 
-  // 🔹 Asiento libre → asignar
-  ui.loading('Guardando tu selección...');
+  ui.loading(pendingMove ? 'Cambiando de asiento...' : 'Guardando tu selección...');
   try {
-    let query;
-    if (asientoExistente) {
-      // actualizar asiento vacío existente
-      query = supabase
+    // Evitar duplicados si ya hay un row vacío con ese lugar
+    await supabase
+      .from('mesa_asientos')
+      .delete()
+      .eq('mesa_id', mesaId)
+      .eq('posicion', pos)
+      .is('invitado_id', null);
+
+    if (pendingMove) {
+      // Mover el asiento liberado
+      const { error: updErr } = await supabase
         .from('mesa_asientos')
-        .update({ invitado_id: invitado.id })
-        .eq('id', asientoExistente.id);
+        .update({
+          mesa_id: mesaId,
+          posicion: pos,
+          invitado_id: invitado.id,
+          cambios: pendingMove.cambios + 1,
+        })
+        .eq('id', pendingMove.id);
+
+      if (updErr) throw updErr;
+      pendingMove = null;
     } else {
-      // crear nuevo registro (si no existía)
-      query = supabase
+      // Nuevo asiento (si no hay pendiente)
+      const { error: insErr } = await supabase
         .from('mesa_asientos')
-        .insert([{ mesa_id: mesaId, posicion: pos, invitado_id: invitado.id }]);
+        .insert([{ mesa_id: mesaId, posicion: pos, invitado_id: invitado.id, cambios: 0 }]);
+
+      if (insErr) throw insErr;
     }
 
-    const { error } = await query;
-    if (error) throw error;
-
-    // ✅ Agregar al array local
-    asientosSeleccionados.push({ mesa_id: mesaId, posicion: pos });
-
     ui.close();
-    ui.success('Asiento seleccionado correctamente.');
-    renderHeader(); // 🔁 refrescar contador
+    ui.success('Asiento guardado correctamente.');
     await cargarMesas();
+    recalcularAsientosSeleccionados();
+    renderHeader();
   } catch (err) {
     ui.close();
     console.error(err);
     ui.error('No se pudo guardar tu selección.');
   }
 });
-
 
 cargarMesas();
