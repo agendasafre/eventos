@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-
+//a comment
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).send('Método no permitido');
