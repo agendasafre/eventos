@@ -1,0 +1,21 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/retiro",
+      "destination": "/retiro.html"
+    },
+    {
+      "source": "/mesas",
+      "destination": "/mesas.html"
+    },
+    {
+      "source": "/sorteo",
+      "destination": "/sorteo.html"
+    }
+  ]
+}
