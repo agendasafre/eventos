@@ -4,105 +4,154 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Retiro de Entradas – Cena UNSJ</title>
-    <link rel="icon" type="image/webp" href="/src/assets/logo.webp" />
+    <link rel="icon" type="image/webp" href="./assets/logo-blanco.webp" />
     <link rel="stylesheet" href="/src/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script
+      src="https://kit.fontawesome.com/1b5f5a7b6b.js"
+      crossorigin="anonymous"
+    ></script>
   </head>
 
-  <body class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste flex items-center justify-center p-6">
-    <main class="w-full max-w-2xl bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
-      <header class="bg-azuloscuro text-crema text-center py-8 px-6">
-        <h1 class="text-2xl md:text-3xl font-bold tracking-tight">🎟️ Retiro de Entradas</h1>
-        <p class="text-celeste text-sm mt-1">Cena de Fin de Año – Rectorado UNSJ</p>
-      </header>
+  <body
+    class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste flex flex-col items-center justify-start p-6"
+  >
+    <header class="text-center mb-6">
+      <img
+        src="../src/assets/logo-blanco.webp"
+        alt="Logo UNSJ"
+        class="w-24 mx-auto mb-4"
+      />
+      <h1 class="text-3xl font-bold text-crema">
+        🎟️ Retiro de Entradas – Cena UNSJ
+      </h1>
+      <p class="text-celeste mt-1">
+        Confirmación y entrega de pulseras del evento
+      </p>
+    </header>
 
-      <form id="form" class="p-8 space-y-6">
+    <main
+      class="bg-white/90 rounded-2xl shadow-lg w-full max-w-lg p-6 space-y-6"
+    >
+      <form id="form" class="space-y-6">
+        <!-- DNI -->
         <div>
-          <label for="dni" class="block text-sm font-medium text-gray-700 mb-1">
-            DNI <span class="text-gray-500">(sin puntos ni espacios)</span>
-          </label>
+          <label
+            for="dni"
+            class="block text-sm font-semibold text-azuloscuro mb-1"
+            >DNI</label
+          >
           <input
-            type="text"
             id="dni"
             name="dni"
-            placeholder="Ej: 12345678"
+            type="text"
+            maxlength="10"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-azuloscuro p-2 text-azuloscuro focus:outline-none"
+            placeholder="Ingrese el DNI"
             required
-            class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
           />
         </div>
 
-        <section id="retiroSection" class="hidden space-y-4">
-          <div class="bg-celeste/10 border border-celeste rounded-lg p-4">
-            <h2 class="font-semibold text-azuloscuro text-lg mb-3">🍽️ Menús a retirar</h2>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Común</label>
-                <input
-                  type="number"
-                  id="comun"
-                  name="comun"
-                  min="0"
-                  placeholder="0"
-                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro 
-                  p-1 
-                  text-azuloscuro 
-                  transition"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Celíacos</label>
-                <input
-                  type="number"
-                  id="celiacos"
-                  name="celiacos"
-                  min="0"
-                  placeholder="0"
-                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Vegetarianos</label>
-                <input
-                  type="number"
-                  id="vegetarianos"
-                  name="vegetarianos"
-                  min="0"
-                  placeholder="0"
-                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
-                />
-              </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700">Veganos</label>
-                <input
-                  type="number"
-                  id="veganos"
-                  name="veganos"
-                  min="0"
-                  placeholder="0"
-                  class="w-full mt-1 rounded-md border-gray-300 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro p-1  text-azuloscuro transition"
-                />
-              </div>
+          <!-- Menús -->
+          <div
+            class="grid grid-cols-2 gap-3 border-t border-gray-300 pt-3 text-sm"
+          >
+            <div>
+              <label
+                for="comun"
+                class="block text-gray-700 font-medium mb-1"
+                >Menú común</label
+              >
+              <input
+                id="comun"
+                name="comun"
+                type="number"
+                min="0"
+                class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
+                readonly
+              />
+            </div>
+            <div>
+              <label
+                for="celiacos"
+                class="block text-gray-700 font-medium mb-1"
+                >Celíacos</label
+              >
+              <input
+                id="celiacos"
+                name="celiacos"
+                type="number"
+                min="0"
+                class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
+                readonly
+              />
+            </div>
+            <div>
+              <label
+                for="vegetarianos"
+                class="block text-gray-700 font-medium mb-1"
+                >Vegetarianos</label
+              >
+              <input
+                id="vegetarianos"
+                name="vegetarianos"
+                type="number"
+                min="0"
+                class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
+                readonly
+              />
+            </div>
+            <div>
+              <label
+                for="veganos"
+                class="block text-gray-700 font-medium mb-1"
+                >Veganos</label
+              >
+              <input
+                id="veganos"
+                name="veganos"
+                type="number"
+                min="0"
+                class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
+                readonly
+              />
             </div>
           </div>
 
-          <button
-            id="submitBtn"
-            type="submit"
-            disabled
-            class="w-full py-3 text-lg font-semibold rounded-lg bg-azuloscuro text-white hover:bg-azul transition disabled:bg-gray-400 disabled:cursor-not-allowed focus:ring-2 focus:ring-azul/40"
+          <div class="text-center text-azuloscuro font-bold">
+            Total: <span id="totalNum">0</span>
+          </div>
+
+          <!-- Pulseras -->
+          <div
+            id="pulserasContainer"
+            class="hidden mt-4 bg-celeste/20 p-3 rounded-lg text-center"
           >
-            Confirmar retiro
-          </button>
+            <h4 class="text-azuloscuro font-semibold mb-2">
+              Pulseras a entregar
+            </h4>
+            <div
+              id="listaPulseras"
+              class="flex flex-wrap justify-center gap-2"
+            ></div>
+          </div>
+
+          <div class="pt-4 text-center">
+            <button
+              id="submitBtn"
+              type="submit"
+              class="bg-azuloscuro hover:bg-azul text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50"
+            >
+              Confirmar retiro
+            </button>
+          </div>
         </section>
       </form>
-
-      <footer class="text-center py-6 bg-crema/80 text-gray-700 text-sm">
-        <p>Universidad Nacional de San Juan<br>
-        - Rectorado -<br>
-        <span id="anio"></span>
-        </p>
-      </footer>
     </main>
+
+    <footer class="text-center py-6 mt-10 text-crema/80 text-sm">
+      <p>© <span id="anio"></span> · Rectorado – Universidad Nacional de San Juan</p>
+    </footer>
 
     <script type="module" src="/src/pages/retiro.js"></script>
   </body>
