@@ -176,12 +176,6 @@ form.addEventListener('submit', async (e) => {
   try {
     ui.loading('Registrando retiro...');
 
-    // 👉 El serverless /api/retirar hace:
-    // - valida invitado y estado
-    // - asigna N pulseras disponibles
-    // - marca invitado.retiro = true y actualiza opciones_*
-    // - marca entradas.entregado = true y dni_titular = dni
-    // - envía mailRetiro por Apps Script
     const payload = {
       dni: invitado.dni,
       comun: int(comunInput.value),
@@ -190,24 +184,26 @@ form.addEventListener('submit', async (e) => {
       veganos: int(veganosInput.value),
     };
 
-    // El helper `post` suele devolver texto; si devolvés JSON en /api/retirar
-    // podés adaptarlo acá (p.ej. JSON.parse).
-    await post(ENDPOINT, payload);
+    // Llamado directo para poder leer el JSON (si tu helper post ya devuelve JSON, usalo)
+    const resp = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    if (!resp.ok) throw new Error(data?.error || 'Error en retiro');
 
-    // Traigo las pulseras recién asignadas para mostrarlas
-    const numeros = await obtenerPulserasPorDNI(invitado.dni, total);
-    if (numeros.length) mostrarPulseras(numeros);
+    // 👇 Mostrar SOLO las pulseras recién asignadas
+    mostrarPulseras(data.numeros);
 
     ui.close();
     ui.success('Retiro registrado y correo enviado.');
-
-    // Bloquear para evitar doble operación
     bloquearInputs(true);
     dniValido = false;
   } catch (err) {
     ui.close();
     console.error(err);
-    ui.error('No se pudo registrar el retiro.');
+    ui.error(err.message || 'No se pudo registrar el retiro.');
   }
 });
 
