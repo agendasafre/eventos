@@ -100,6 +100,7 @@ dniInput.addEventListener('blur', async () => {
       dniValido = false;
       ui.error('DNI no encontrado o no habilitado.');
       bloquearInputs(true);
+      pulserasContainer.classList.add('hidden');
       return;
     }
 
@@ -107,25 +108,39 @@ dniInput.addEventListener('blur', async () => {
     nombreInput.value = data.nombre || '';
     correoInput.value = data.correo || '';
 
-    // 1) Debe haber aceptado términos
+    // 1️⃣ No aceptó términos
     if (!data.acepto_terminos) {
       dniValido = false;
       ui.info('El invitado no aceptó los términos.');
       bloquearInputs(true);
+      pulserasContainer.classList.add('hidden');
       return;
     }
 
-    // 2) Si ya retiró: feedback + bloqueo + mostrar pulseras asignadas
+    // 2️⃣ Ya retiró -> mostrar solo SUS pulseras
     if (data.retiro === true) {
       dniValido = false;
-      ui.info('Este invitado ya retiró sus pulseras.');
+      ui.info('Este invitado ya retiró sus entradas.');
       bloquearInputs(true);
-      const yaEntregadas = await obtenerPulserasPorDNI(dni);
-      if (yaEntregadas.length) mostrarPulseras(yaEntregadas);
+
+      // Traer solo las pulseras de este invitado
+      const { data: asignadas, error: errAsig } = await supabase
+        .from('entradas')
+        .select('numero')
+        .eq('dni_titular', dni)
+        .eq('entregado', true)
+        .order('numero', { ascending: true });
+
+      if (!errAsig && asignadas?.length) {
+        const numeros = asignadas.map((e) => e.numero);
+        mostrarPulseras(numeros);
+      } else {
+        pulserasContainer.classList.add('hidden');
+      }
       return;
     }
 
-    // 3) Habilitar edición de menús y validación
+    // 3️⃣ Caso normal (aún no retiró)
     comunInput.value = data.opciones_comun || 0;
     celiacosInput.value = data.opciones_celiacos || 0;
     vegetarianosInput.value = data.opciones_vegetarianos || 0;
@@ -135,11 +150,13 @@ dniInput.addEventListener('blur', async () => {
     bloquearInputs(false);
     actualizarUI();
     ui.success('DNI validado. Podés registrar el retiro.');
+    pulserasContainer.classList.add('hidden');
   } catch (err) {
     ui.close();
     console.error(err);
     ui.error('Error al verificar el DNI.');
     bloquearInputs(true);
+    pulserasContainer.classList.add('hidden');
   }
 });
 
