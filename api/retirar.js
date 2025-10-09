@@ -1,95 +1,118 @@
 import { createClient } from '@supabase/supabase-js';
-//a comment
+
+// 🔑 Supabase Service Key (no la anon key)
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY
+);
+
+// URL del Apps Script para enviar correos
+const APPS_SCRIPT_URL =
+  'https://script.google.com/macros/s/AKfycbxYourAppsScriptID/exec'; // ⚠️ reemplazá con tu URL real
+
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).send('Método no permitido');
-  }
-
-  const SUPABASE_URL = process.env.SUPABASE_URL;
-  const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY;
-  const SCRIPT_URL = process.env.SCRIPT_URL;
-
-  if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !SCRIPT_URL) {
-    return res.status(500).send('Falta configuración del servidor.');
-  }
-
-  const { dni, comun = 0, celiacos = 0, vegetarianos = 0, veganos = 0 } = req.body || {};
-  const n = (v) => parseInt(v ?? 0, 10) || 0;
-
-  if (!dni) return res.status(400).send('DNI faltante.');
-
-  const total = n(comun) + n(celiacos) + n(vegetarianos) + n(veganos);
-  if (total < 1) {
-    return res.status(400).send('Debés ingresar al menos un menú retirado.');
-  }
-
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
-
   try {
+    if (req.method !== 'POST') {
+      return res.status(405).json({ error: 'Método no permitido' });
+    }
+
+    const { dni, comun, celiacos, vegetarianos, veganos } = req.body;
+    if (!dni) return res.status(400).json({ error: 'DNI requerido' });
+
     // 1️⃣ Buscar invitado
-    const { data: invitado, error: findErr } = await supabase
+    const { data: invitado, error: errInv } = await supabase
       .from('invitados')
       .select('*')
       .eq('dni', dni)
       .maybeSingle();
 
-    if (findErr || !invitado) {
-      return res.status(404).send('Invitado no encontrado.');
-    }
+    if (errInv) throw errInv;
+    if (!invitado) return res.status(404).json({ error: 'Invitado no encontrado' });
+    if (!invitado.acepto_terminos)
+      return res.status(403).json({ error: 'El invitado no aceptó los términos' });
+    if (invitado.retiro)
+      return res.status(409).json({ error: 'El invitado ya retiró sus entradas' });
 
-    if (invitado.retiro === true) {
-      return res.status(409).send('Este invitado ya retiró sus entradas.');
-    }
+    // 2️⃣ Calcular total de menús
+    const total =
+      (parseInt(comun) || 0) +
+      (parseInt(celiacos) || 0) +
+      (parseInt(vegetarianos) || 0) +
+      (parseInt(veganos) || 0);
 
-    // 2️⃣ Actualizar estado y cantidades
-    const { error: updErr } = await supabase
+    if (total < 1)
+      return res.status(400).json({ error: 'El total de menús debe ser mayor a 0' });
+
+    // 3️⃣ Buscar pulseras disponibles
+    const { data: libres, error: errLibres } = await supabase
+      .from('entradas')
+      .select('numero')
+      .eq('entregado', false)
+      .order('numero', { ascending: true })
+      .limit(total);
+
+    if (errLibres) throw errLibres;
+    if (!libres?.length)
+      return res.status(409).json({ error: 'No hay pulseras disponibles' });
+
+    const numeros = libres.map((e) => e.numero);
+
+    // 4️⃣ Actualizar invitado
+    const { error: errUpInv } = await supabase
       .from('invitados')
       .update({
         retiro: true,
-        opciones_comun: n(comun),
-        opciones_celiacos: n(celiacos),
-        opciones_vegetarianos: n(vegetarianos),
-        opciones_veganos: n(veganos),
-        opciones: total,
-        estado: 'retirado',
+        opciones_comun: comun || 0,
+        opciones_celiacos: celiacos || 0,
+        opciones_vegetarianos: vegetarianos || 0,
+        opciones_veganos: veganos || 0,
       })
-      .eq('dni', dni);
+      .eq('id', invitado.id);
 
-    if (updErr) {
-      console.error('Error al actualizar retiro:', updErr);
-      return res.status(500).send('No se pudo registrar el retiro.');
-    }
+    if (errUpInv) throw errUpInv;
 
-    // 3️⃣ Enviar correo con Apps Script
-    const mailPayload = {
+    // 5️⃣ Marcar entradas entregadas
+    const { error: errEntradas } = await supabase
+      .from('entradas')
+      .update({ entregado: true, dni_titular: dni })
+      .in('numero', numeros);
+
+    if (errEntradas) throw errEntradas;
+
+    // 6️⃣ Enviar correo vía Apps Script
+    const payloadMail = {
       action: 'mail_retiro',
       invitado: {
         nombre: invitado.nombre,
         correo: invitado.correo,
       },
-      numeros: [], // si luego querés agregar Nº de pulsera, podés pasar array
-      comun: n(comun),
-      celiacos: n(celiacos),
-      vegetarianos: n(vegetarianos),
-      veganos: n(veganos),
+      numeros,
+      comun,
+      celiacos,
+      vegetarianos,
+      veganos,
       total,
-      mesa_token: invitado.mesa_token ?? null,
+      mesa_token: invitado.mesa_token,
     };
 
-    const mailResp = await fetch(SCRIPT_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(mailPayload),
-    });
-
-    const mailText = await mailResp.text();
-    if (mailText.trim() !== 'OK') {
-      console.warn('Apps Script respondió:', mailText);
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payloadMail),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    } catch (mailErr) {
+      console.error('Error enviando correo:', mailErr);
     }
 
-    return res.status(200).send('Retiro registrado y correo enviado.');
+    // 7️⃣ Responder OK
+    return res.status(200).json({
+      message: 'Retiro registrado correctamente',
+      numeros,
+      total,
+    });
   } catch (err) {
-    console.error('Error general en /api/retirar:', err);
-    return res.status(500).send('Error interno al procesar el retiro.');
+    console.error('Error en /api/retirar:', err);
+    return res.status(500).json({ error: err.message || 'Error interno' });
   }
 }

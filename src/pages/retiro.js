@@ -2,12 +2,14 @@ import { supabase } from '../lib/supabase.js';
 import { post } from '../lib/api.js';
 import { ui } from '../ui.js';
 
+// En dev podés pegar la URL de Vercel si no tenés proxy:
 const ENDPOINT = import.meta.env.DEV
   ? 'https://cena-unsj.vercel.app/api/retirar'
   : '/api/retirar';
 
 const $ = (s, p = document) => p.querySelector(s);
 
+// DOM
 const form = $('#form');
 const dniInput = $('#dni');
 const nombreInput = $('#nombre');
@@ -23,7 +25,6 @@ const submitBtn = $('#submitBtn');
 
 let invitado = null;
 let dniValido = false;
-let numerosPulseras = [];
 
 // ---- Helpers ----
 const int = (v) => (Number.isNaN(parseInt(v, 10)) ? 0 : parseInt(v, 10));
@@ -36,14 +37,23 @@ function totalMenus() {
   );
 }
 
+function bloquearInputs(bloquear = true) {
+  const fields = [comunInput, celiacosInput, vegetarianosInput, veganosInput];
+  fields.forEach((el) => {
+    if (bloquear) el.setAttribute('readonly', true);
+    else el.removeAttribute('readonly');
+  });
+  submitBtn.disabled = bloquear || totalMenus() < 1;
+}
+
 function actualizarUI() {
   const total = totalMenus();
   totalNum.textContent = total;
   submitBtn.disabled = !dniValido || total < 1;
 }
 
-// Mostrar pulseras visualmente
 function mostrarPulseras(numeros) {
+  if (!Array.isArray(numeros)) return;
   listaPulseras.innerHTML = '';
   numeros.forEach((n) => {
     const span = document.createElement('span');
@@ -55,7 +65,23 @@ function mostrarPulseras(numeros) {
   pulserasContainer.classList.remove('hidden');
 }
 
-// ---- Validar DNI ----
+async function obtenerPulserasPorDNI(dni, limit = null) {
+  const q = supabase
+    .from('entradas')
+    .select('numero')
+    .eq('dni_titular', dni)
+    .eq('entregado', true)
+    .order('numero', { ascending: true });
+
+  const { data, error } = limit ? await q.limit(limit) : await q;
+  if (error) {
+    console.error(error);
+    return [];
+  }
+  return (data || []).map((r) => r.numero);
+}
+
+// ---- Validar DNI (flujo original) ----
 dniInput.addEventListener('blur', async () => {
   const dni = dniInput.value.trim();
   if (!dni) return;
@@ -73,6 +99,7 @@ dniInput.addEventListener('blur', async () => {
     if (error || !data) {
       dniValido = false;
       ui.error('DNI no encontrado o no habilitado.');
+      bloquearInputs(true);
       return;
     }
 
@@ -80,7 +107,7 @@ dniInput.addEventListener('blur', async () => {
     nombreInput.value = data.nombre || '';
     correoInput.value = data.correo || '';
 
-    // 🟡 Caso 1: no aceptó términos
+    // 1) Debe haber aceptado términos
     if (!data.acepto_terminos) {
       dniValido = false;
       ui.info('El invitado no aceptó los términos.');
@@ -88,64 +115,40 @@ dniInput.addEventListener('blur', async () => {
       return;
     }
 
-    // 🟢 Caso 2: ya retiró
+    // 2) Si ya retiró: feedback + bloqueo + mostrar pulseras asignadas
     if (data.retiro === true) {
       dniValido = false;
       ui.info('Este invitado ya retiró sus pulseras.');
       bloquearInputs(true);
-
-      // Mostrar info opcional
-      const { data: pulseras } = await supabase
-        .from('entradas')
-        .select('numero')
-        .eq('dni_titular', dni)
-        .order('numero');
-      if (pulseras?.length) mostrarPulseras(pulseras.map((p) => p.numero));
-
+      const yaEntregadas = await obtenerPulserasPorDNI(dni);
+      if (yaEntregadas.length) mostrarPulseras(yaEntregadas);
       return;
     }
 
-    // 🟢 Caso 3: habilitado para retiro
-    dniValido = true;
-    [comunInput, celiacosInput, vegetarianosInput, veganosInput].forEach((el) =>
-      el.removeAttribute('readonly')
-    );
-
+    // 3) Habilitar edición de menús y validación
     comunInput.value = data.opciones_comun || 0;
     celiacosInput.value = data.opciones_celiacos || 0;
     vegetarianosInput.value = data.opciones_vegetarianos || 0;
     veganosInput.value = data.opciones_veganos || 0;
 
+    dniValido = true;
+    bloquearInputs(false);
     actualizarUI();
-    ui.success('DNI validado correctamente. Podés registrar el retiro.');
+    ui.success('DNI validado. Podés registrar el retiro.');
   } catch (err) {
     ui.close();
     console.error(err);
     ui.error('Error al verificar el DNI.');
+    bloquearInputs(true);
   }
 });
 
-function bloquearInputs(bloquear = true) {
-  const fields = [
-    comunInput,
-    celiacosInput,
-    vegetarianosInput,
-    veganosInput,
-    submitBtn,
-  ];
-  fields.forEach((el) => {
-    if (bloquear) el.setAttribute('readonly', true);
-    else el.removeAttribute('readonly');
-  });
-  submitBtn.disabled = bloquear;
-}
-
-// ---- Recalcular total de menús ----
+// ---- Cambios en cantidades de menú ----
 [comunInput, celiacosInput, vegetarianosInput, veganosInput].forEach((el) => {
   el.addEventListener('input', actualizarUI);
 });
 
-// ---- Envío de formulario ----
+// ---- Confirmar retiro (server-side via /api/retirar) ----
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!dniValido || !invitado) return ui.error('Validá primero el DNI.');
@@ -156,63 +159,32 @@ form.addEventListener('submit', async (e) => {
   try {
     ui.loading('Registrando retiro...');
 
-    // Obtener pulseras disponibles según total
-    const { data: libres, error: errLibres } = await supabase
-      .from('entradas')
-      .select('numero')
-      .eq('entregado', false)
-      .order('numero', { ascending: true })
-      .limit(total);
-    if (errLibres) throw errLibres;
-
-    numerosPulseras = (libres || []).map((e) => e.numero);
-
-    if (!numerosPulseras.length) {
-      ui.close();
-      return ui.info('No hay pulseras disponibles.');
-    }
-
-    // Actualizar invitado
-    const { error: errInv } = await supabase
-      .from('invitados')
-      .update({
-        retiro: true,
-        opciones_comun: int(comunInput.value),
-        opciones_celiacos: int(celiacosInput.value),
-        opciones_vegetarianos: int(vegetarianosInput.value),
-        opciones_veganos: int(veganosInput.value),
-      })
-      .eq('id', invitado.id);
-    if (errInv) throw errInv;
-
-    // Actualizar entradas
-    const { error: errEntradas } = await supabase
-      .from('entradas')
-      .update({ entregado: true, dni_titular: invitado.dni })
-      .in('numero', numerosPulseras);
-    if (errEntradas) throw errEntradas;
-
-    // Mostrar visualmente las pulseras asignadas
-    mostrarPulseras(numerosPulseras);
-
-    // Enviar correo
+    // 👉 El serverless /api/retirar hace:
+    // - valida invitado y estado
+    // - asigna N pulseras disponibles
+    // - marca invitado.retiro = true y actualiza opciones_*
+    // - marca entradas.entregado = true y dni_titular = dni
+    // - envía mailRetiro por Apps Script
     const payload = {
-      invitado,
-      numeros: numerosPulseras,
+      dni: invitado.dni,
       comun: int(comunInput.value),
       celiacos: int(celiacosInput.value),
       vegetarianos: int(vegetarianosInput.value),
       veganos: int(veganosInput.value),
-      total,
     };
 
-    const msg = await post(ENDPOINT, payload);
+    // El helper `post` suele devolver texto; si devolvés JSON en /api/retirar
+    // podés adaptarlo acá (p.ej. JSON.parse).
+    await post(ENDPOINT, payload);
+
+    // Traigo las pulseras recién asignadas para mostrarlas
+    const numeros = await obtenerPulserasPorDNI(invitado.dni, total);
+    if (numeros.length) mostrarPulseras(numeros);
 
     ui.close();
     ui.success('Retiro registrado y correo enviado.');
-    console.log('Correo:', msg);
 
-    // Reset visual
+    // Bloquear para evitar doble operación
     bloquearInputs(true);
     dniValido = false;
   } catch (err) {
@@ -223,4 +195,3 @@ form.addEventListener('submit', async (e) => {
 });
 
 $('#anio').textContent = new Date().getFullYear();
-dniInput.focus();
