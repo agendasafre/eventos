@@ -223,3 +223,4 @@ form.addEventListener('submit', async (e) => {
 });
 
 $('#anio').textContent = new Date().getFullYear();
+dniInput.focus();
