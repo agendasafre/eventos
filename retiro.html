@@ -7,10 +7,7 @@
     <link rel="icon" type="image/webp" href="./assets/logo-blanco.webp" />
     <link rel="stylesheet" href="/src/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script
-      src="https://kit.fontawesome.com/1b5f5a7b6b.js"
-      crossorigin="anonymous"
-    ></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
   </head>
 
   <body
@@ -51,6 +48,35 @@
             required
           />
         </div>
+        <!-- Nombre -->
+        <div>
+          <label
+            for="nombre"
+            class="block text-sm font-semibold text-azuloscuro mb-1"
+            >Nombre</label
+          >
+          <input
+            id="nombre"
+            name="nombre"
+            type="text"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+          />
+        </div>
+
+        <!-- Correo -->
+        <div>
+          <label
+            for="correo"
+            class="block text-sm font-semibold text-azuloscuro mb-1"
+            >Correo</label
+          >
+          <input
+            id="correo"
+            name="correo"
+            type="email"
+            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+          />
+        </div>
 
           <!-- Menús -->
           <div
@@ -60,7 +86,7 @@
               <label
                 for="comun"
                 class="block text-gray-700 font-medium mb-1"
-                >Menú común</label
+                >Común / Tradicional</label
               >
               <input
                 id="comun"
@@ -119,7 +145,7 @@
           </div>
 
           <div class="text-center text-azuloscuro font-bold">
-            Total: <span id="totalNum">0</span>
+            Total de opciones: <span id="totalNum">0</span>
           </div>
 
           <!-- Pulseras -->
@@ -140,7 +166,7 @@
             <button
               id="submitBtn"
               type="submit"
-              class="bg-azuloscuro hover:bg-azul text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50"
+              class="bg-azuloscuro hover:bg-azul text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50 w-full p-2"
             >
               Confirmar retiro
             </button>
