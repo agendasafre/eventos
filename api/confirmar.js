@@ -286,6 +286,7 @@ export default async function handler(req, res) {
               mesa: f.mesas?.numero,
               posicion: f.posicion,
             })),
+            mesa_token: invitado.mesa_token,
           }),
         });
       } catch (mailErr) {

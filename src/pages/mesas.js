@@ -315,9 +315,9 @@ function renderMesas() {
       const key = seatKey(mesa.id, pos);
       const draftSeat = draftMap.get(key);
 
-  const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
-  const esTuActual = !!real && real.invitado_id === state.invitado.id;
-  const estaReservadoPorVos = !!draftSeat;
+      const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
+      const esTuActual = !!real && real.invitado_id === state.invitado.id;
+      const estaReservadoPorVos = !!draftSeat;
       const esAsientoNuevo = draftSeat?.isNew || draftSeat?.isMoved;
       const esPendienteDesde = pendingFromKey === key;
 
