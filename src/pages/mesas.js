@@ -336,11 +336,17 @@ function renderMesas() {
         labelText = esAsientoNuevo ? 'Nuevo' : 'Confirmado';
         labelClass = 'text-emerald-600';
       } else if (esPendienteDesde && esTuActual) {
-        button.classList.add('border', 'border-dashed', 'border-amber-400', 'bg-amber-50');
+        button.classList.add(
+          'border-2',
+          'border-dashed',
+          'border-azuloscuro',
+          'bg-azul/10',
+          'text-azuloscuro'
+        );
         icon.classList.add('fa-person-walking-arrow-right');
         title = 'Liberado para mover';
-        labelText = 'Moverás este asiento';
-        labelClass = 'text-amber-500';
+        labelText = 'Elegí tu nuevo asiento';
+        labelClass = 'text-azuloscuro font-semibold';
       } else if (esTuActual) {
         button.classList.add('border-4', 'border-yellow-400', 'bg-yellow-50');
         icon.classList.add('fa-star', 'text-yellow-400');

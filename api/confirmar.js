@@ -124,7 +124,11 @@ export default async function handler(req, res) {
         toRelease.push(seat);
         return;
       }
-      const cappedCambios = Math.min(desired.cambios ?? seat.cambios ?? 0, 2);
+      const requestedCambios = desired.cambios ?? seat.cambios ?? 0;
+      if (requestedCambios > 2) {
+        throw createHttpError(400, 'No podés cambiar un asiento más de 2 veces.');
+      }
+      const cappedCambios = Math.min(requestedCambios, 2);
       if (seat.mesa_id !== desired.mesa_id || seat.posicion !== desired.posicion) {
         toMove.push({
           ...seat,
