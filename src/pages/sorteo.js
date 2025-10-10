@@ -11,8 +11,10 @@ const btnNext = document.getElementById('btnNext');
 const confettiEl = document.getElementById('confetti');
 
 // 🔊 Sonidos
-const drumroll = new Audio('assets/sounds/drumroll.mp3');
-const fanfare = new Audio('/assets/sounds/fanfare.mp3');
+import drumrollFile from '../assets/sounds/drumroll.mp3';
+import fanfareFile from '../assets/sounds/fanfare.mp3';
+const drumroll = new Audio(drumrollFile);
+const fanfare = new Audio(fanfareFile);
 drumroll.volume = 0.6;
 fanfare.volume = 0.8;
 
