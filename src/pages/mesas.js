@@ -18,8 +18,6 @@ if (!token) {
   throw new Error('Token faltante');
 }
 
-ui.loading('Cargando mesas...');
-
 let state = {
   invitado: null,
   mesas: [],
@@ -28,6 +26,9 @@ let state = {
   pendingMove: null,
   draftCounter: 0,
   realtimeChannel: null,
+  realtimeSyncing: false,
+  realtimeQueued: false,
+  lastRealtimeNoticeAt: 0,
 };
 
 // ---- Helpers ----
@@ -136,39 +137,103 @@ function renderHeader() {
   mesasContainer.before(div);
 }
 
-function cargarDesdeMesas(dataMesas, invitadoId) {
-  state.mesas = dataMesas || [];
-  state.confirmed = [];
+function buildOccupancyMap(dataMesas) {
+  const map = new Map();
+  (dataMesas || []).forEach((mesa) => {
+    (mesa.mesa_asientos || []).forEach((asiento) => {
+      if (!asiento) return;
+      map.set(seatKey(mesa.id, asiento.posicion), {
+        mesa_id: mesa.id,
+        ...asiento,
+      });
+    });
+  });
+  return map;
+}
 
-  for (const mesa of state.mesas) {
-    const arr = mesa.mesa_asientos || [];
-    for (const asiento of arr) {
+function cargarDesdeMesas(dataMesas, invitadoId, { preserveDraft = false } = {}) {
+  const mesas = dataMesas || [];
+  const confirmed = [];
+  const occupancy = buildOccupancyMap(mesas);
+
+  mesas.forEach((mesa) => {
+    (mesa.mesa_asientos || []).forEach((asiento) => {
       if (asiento?.invitado_id === invitadoId) {
-        state.confirmed.push({
+        confirmed.push({
           id: asiento.id,
           mesa_id: mesa.id,
           posicion: asiento.posicion,
           cambios: asiento.cambios || 0,
         });
       }
+    });
+  });
+
+  state.mesas = mesas;
+  state.confirmed = confirmed;
+
+  if (!preserveDraft) {
+    cloneConfirmedToDraft();
+    return { removedKeys: [], occupancy };
+  }
+
+  const updatedDraft = [];
+  const removedKeys = [];
+  const pendingKey = state.pendingMove
+    ? seatKey(state.pendingMove.fromMesaId, state.pendingMove.fromPosicion)
+    : null;
+
+  state.draft.forEach((seat) => {
+    const key = seatKey(seat.mesa_id, seat.posicion);
+    const occupant = occupancy.get(key);
+
+    if (occupant && occupant.invitado_id && occupant.invitado_id !== invitadoId) {
+      removedKeys.push(key);
+      return;
+    }
+
+    if (occupant && occupant.invitado_id === invitadoId) {
+      seat.id = occupant.id;
+      seat.cambios = occupant.cambios || 0;
+      seat.proposedCambios = seat.proposedCambios ?? seat.cambios;
+      seat.isNew = false;
+      seat.isMoved = false;
+    }
+
+    updatedDraft.push(seat);
+  });
+
+  state.draft = updatedDraft;
+
+  if (pendingKey) {
+    const occupant = occupancy.get(pendingKey);
+    if (!occupant || occupant.invitado_id !== invitadoId) {
+      state.pendingMove = null;
     }
   }
-  cloneConfirmedToDraft();
+
+  return { removedKeys, occupancy };
 }
 
 // ---- Cargar mesas e invitado ----
-async function cargarMesas({ showLoading = false } = {}) {
+async function cargarMesas({
+  showLoading = false,
+  preserveDraft = false,
+  loadingMessage = 'Actualizando mesas...',
+} = {}) {
   try {
-    if (showLoading) ui.loading('Actualizando mesas...');
+    if (showLoading) ui.loading(loadingMessage);
 
-    const { data: user, error: userErr } = await supabase
-      .from('invitados')
-      .select('*')
-      .eq('mesa_token', token)
-      .maybeSingle();
+    if (!state.invitado || !preserveDraft) {
+      const { data: user, error: userErr } = await supabase
+        .from('invitados')
+        .select('*')
+        .eq('mesa_token', token)
+        .maybeSingle();
 
-    if (userErr || !user) throw new Error('Token inválido');
-    state.invitado = user;
+      if (userErr || !user) throw new Error('Token inválido');
+      state.invitado = user;
+    }
 
     const { data: dataMesas, error: mesasErr } = await supabase
       .from('mesas')
@@ -188,13 +253,27 @@ async function cargarMesas({ showLoading = false } = {}) {
 
     if (mesasErr) throw mesasErr;
 
-    cargarDesdeMesas(dataMesas, user.id);
+    const { removedKeys } = cargarDesdeMesas(dataMesas, state.invitado.id, { preserveDraft });
     render();
+
+    if (preserveDraft && removedKeys.length) {
+      const now = Date.now();
+      if (now - state.lastRealtimeNoticeAt > 3000) {
+        const mensaje =
+          removedKeys.length === 1
+            ? 'Un asiento que estabas mirando fue tomado por otra persona. Actualizamos tu selección.'
+            : 'Algunos asientos que estabas mirando fueron tomados por otras personas. Actualizamos tu selección.';
+        ui.info(mensaje);
+        state.lastRealtimeNoticeAt = now;
+      }
+    }
   } catch (err) {
     console.error(err);
-    ui.error('Error al cargar las mesas.');
+    if (!preserveDraft) {
+      ui.error('Error al cargar las mesas.');
+    }
   } finally {
-    ui.close();
+    if (showLoading) ui.close();
   }
 }
 
@@ -367,6 +446,7 @@ function assignPendingMove(targetMesaId, targetPos) {
   seat.mesa_id = targetMesaId;
   seat.posicion = targetPos;
   seat.isMoved = true;
+  seat.cambios = nextCambios;
   seat.proposedCambios = nextCambios;
 
   state.pendingMove = null;
@@ -498,12 +578,26 @@ confirmBtn.addEventListener('click', async () => {
     } catch (_) {
       ui.error(err.message || 'No pudimos guardar tus asientos.');
     }
+    await cargarMesas({ preserveDraft: true });
   }
 });
 
 async function renderRealtimeUpdate() {
-  if (draftHasChanges()) return;
-  await cargarMesas();
+  if (state.realtimeSyncing) {
+    state.realtimeQueued = true;
+    return;
+  }
+
+  state.realtimeSyncing = true;
+  try {
+    await cargarMesas({ preserveDraft: true });
+  } finally {
+    state.realtimeSyncing = false;
+    if (state.realtimeQueued) {
+      state.realtimeQueued = false;
+      renderRealtimeUpdate();
+    }
+  }
 }
 
 function subscribeRealtime() {
@@ -532,7 +626,7 @@ window.addEventListener('beforeunload', () => {
 });
 
 async function init() {
-  await cargarMesas();
+  await cargarMesas({ showLoading: true, loadingMessage: 'Cargando mesas...' });
   subscribeRealtime();
 }
 

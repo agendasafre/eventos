@@ -10,6 +10,12 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 
+function createHttpError(status, message) {
+  const err = new Error(message);
+  err.status = status;
+  return err;
+}
+
 function totalMenus(invitado) {
   if (!invitado) return 0;
   return (
@@ -103,6 +109,12 @@ export default async function handler(req, res) {
       else desiredNew.push(seat);
     }
 
+    desiredById.forEach((_, id) => {
+      if (!actualesMap.has(id)) {
+        throw createHttpError(400, 'Detectamos un asiento inválido en tu selección.');
+      }
+    });
+
     const toRelease = [];
     const toMove = [];
 
@@ -139,7 +151,7 @@ export default async function handler(req, res) {
       for (const release of appliedReleases.reverse()) {
         await supabase
           .from('mesa_asientos')
-          .update({ invitado_id: invitado.id })
+          .update({ invitado_id: invitado.id, cambios: release.cambios || 0 })
           .eq('id', release.id);
       }
 
@@ -181,9 +193,14 @@ export default async function handler(req, res) {
           .eq('invitado_id', invitado.id)
           .select();
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            throw createHttpError(409, 'El asiento seleccionado ya no está disponible.');
+          }
+          throw error;
+        }
         if (!data || !data.length) {
-          throw new Error('El asiento seleccionado ya no está disponible.');
+          throw createHttpError(409, 'El asiento seleccionado ya no está disponible.');
         }
 
         appliedMoves.push({
@@ -208,9 +225,14 @@ export default async function handler(req, res) {
           })
           .select();
 
-        if (error) throw error;
+        if (error) {
+          if (error.code === '23505') {
+            throw createHttpError(409, 'Uno de los asientos seleccionados ya fue tomado.');
+          }
+          throw error;
+        }
         if (!data || !data.length) {
-          throw new Error('No pudimos reservar uno de los asientos seleccionados.');
+          throw createHttpError(409, 'No pudimos reservar uno de los asientos seleccionados.');
         }
 
         appliedInserts.push(data[0]);
@@ -218,13 +240,17 @@ export default async function handler(req, res) {
 
       // Liberar asientos quitados
       for (const seat of toRelease) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('mesa_asientos')
           .update({ invitado_id: null })
           .eq('id', seat.id)
-          .eq('invitado_id', invitado.id);
+          .eq('invitado_id', invitado.id)
+          .select('id');
 
         if (error) throw error;
+        if (!data || !data.length) {
+          throw createHttpError(409, 'No pudimos liberar uno de tus asientos previos.');
+        }
         appliedReleases.push(seat);
       }
     } catch (err) {
