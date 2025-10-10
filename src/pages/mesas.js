@@ -303,9 +303,9 @@ function renderMesas() {
       const key = seatKey(mesa.id, pos);
       const draftSeat = draftMap.get(key);
 
-      const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
-      const esTuActual = !!real && real.invitado_id === state.invitado.id;
-      const estaReservadoPorVos = !!draftSeat;
+  const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
+  const esTuActual = !!real && real.invitado_id === state.invitado.id;
+  const estaReservadoPorVos = !!draftSeat;
       const esAsientoNuevo = draftSeat?.isNew || draftSeat?.isMoved;
       const esPendienteDesde = pendingFromKey === key;
 
@@ -329,24 +329,24 @@ function renderMesas() {
         title = real?.invitados?.nombre || 'Ocupado';
         labelText = real?.invitados?.nombre || 'Ocupado';
         labelClass = 'text-gray-800';
-      } else if (estaReservadoPorVos) {
-        button.classList.add('border-4', 'border-emerald-400', 'bg-emerald-50');
-        icon.classList.add('fa-star', 'text-emerald-500');
-        title = esAsientoNuevo ? 'Nuevo asiento seleccionado' : 'Tu asiento';
-        labelText = esAsientoNuevo ? 'Nuevo' : 'Confirmado';
-        labelClass = 'text-emerald-600';
       } else if (esPendienteDesde && esTuActual) {
         button.classList.add(
           'border-2',
           'border-dashed',
           'border-azuloscuro',
-          'bg-azul/10',
+          'bg-azuloscuro/10',
           'text-azuloscuro'
         );
         icon.classList.add('fa-person-walking-arrow-right');
         title = 'Liberado para mover';
         labelText = 'Elegí tu nuevo asiento';
         labelClass = 'text-azuloscuro font-semibold';
+      } else if (estaReservadoPorVos) {
+        button.classList.add('border-4', 'border-emerald-400', 'bg-emerald-50');
+        icon.classList.add('fa-star', 'text-emerald-500');
+        title = esAsientoNuevo ? 'Nuevo asiento seleccionado' : 'Tu asiento';
+        labelText = esAsientoNuevo ? 'Nuevo' : 'Confirmado';
+        labelClass = 'text-emerald-600';
       } else if (esTuActual) {
         button.classList.add('border-4', 'border-yellow-400', 'bg-yellow-50');
         icon.classList.add('fa-star', 'text-yellow-400');
