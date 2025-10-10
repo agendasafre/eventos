@@ -5,3 +5,142 @@
 body {
   @apply bg-azuloscuro text-crema font-sans;
 }
+
+/* Estilo del sorteo */
+:root {
+  --g1: #1d3557;
+  --g2: #457b9d;
+  --g3: #a8dadc;
+}
+
+body.sorteo {
+  background: linear-gradient(130deg, var(--g1), var(--g2), var(--g3));
+  background-size: 200% 200%;
+  animation: bgMove 14s ease-in-out infinite;
+  font-family: "Segoe UI", Arial, sans-serif;
+  overflow: hidden;
+}
+
+@keyframes bgMove {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.wrap {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  align-items: center;
+  justify-items: center;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.logo {
+  width: clamp(120px, 14vw, 180px);
+  margin: auto;
+}
+
+.title {
+  margin: 10px 0 0;
+  font-size: clamp(22px, 4vw, 42px);
+  font-weight: 600;
+}
+
+.slot {
+  position: relative;
+  width: min(900px, 92vw);
+  height: clamp(80px, 10vw, 120px);
+  margin-top: clamp(18px, 3vh, 30px);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  display: grid;
+  place-items: center;
+}
+
+.slot__text {
+  font-size: clamp(24px, 4vw, 44px);
+  font-weight: 700;
+  text-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+.btn {
+  font-size: 18px;
+  padding: 12px 22px;
+  border-radius: 12px;
+  border: none;
+  cursor: pointer;
+  color: #1d3557;
+  background: #fff;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.btn:hover {
+  background: #f1faee;
+  transform: scale(1.05);
+}
+
+.winner {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(1200px 600px at 50% -10%, rgba(255, 255, 255, 0.15), rgba(0, 0, 0, 0.55));
+  display: none;
+  place-items: center;
+  z-index: 10;
+}
+
+.winner.show {
+  display: grid;
+}
+
+.winner__card {
+  text-align: center;
+  padding: 20px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.winner__name {
+  font-size: clamp(40px, 7vw, 92px);
+  font-weight: 800;
+  margin-top: 10px;
+  color: #fff;
+  text-shadow: 0 0 40px rgba(255, 255, 255, 0.6);
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+}
+
+.dot {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  animation: fall linear forwards;
+}
+
+@keyframes fall {
+  from {
+    transform: translateY(-10vh);
+  }
+
+  to {
+    transform: translateY(110vh);
+  }
+}

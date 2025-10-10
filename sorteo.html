@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sorteo – Cena UNSJ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/webp" href="/src/assets/logo.webp" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+
+  <body class="text-white overflow-hidden">
+    <div class="wrap">
+      <div style="text-align:center;">
+        <img
+          src="/src/assets/logo-blanco.webp"
+          alt="Logo"
+          class="logo"
+        />
+        <h1 class="title">Sorteo - Cena UNSJ 2025</h1>
+      </div>
+
+      <div class="slot">
+        <div id="slotText" class="slot__text">Listo para sortear…</div>
+      </div>
+
+      <div class="controls">
+        <button id="btnStart" class="btn">Iniciar sorteo</button>
+      </div>
+    </div>
+
+    <div id="winner" class="winner">
+      <div class="winner__card">
+        <div class="winner__name" id="winnerName">Nº 000</div>
+        <div class="controls" style="margin-top:22px;">
+          <button id="btnNext" class="btn">Sortear siguiente</button>
+        </div>
+      </div>
+      <div id="confetti" class="confetti"></div>
+    </div>
+
+    <script type="module" src="/src/pages/sorteo.js"></script>
+  </body>
+</html>

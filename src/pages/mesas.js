@@ -1,9 +1,15 @@
 import { supabase } from '../lib/supabase.js';
 import { ui } from '../ui.js';
+import { post } from '../lib/api.js';
 
 const $ = (s, p = document) => p.querySelector(s);
 const mesasContainer = $('#mesasContainer');
+const confirmBtn = $('#confirmBtn');
 $('#anio').textContent = new Date().getFullYear();
+
+const CONFIRM_ENDPOINT = import.meta.env.DEV
+  ? 'https://cena-unsj.vercel.app/api/confirmar'
+  : '/api/confirmar';
 
 // Token del invitado
 const token = new URLSearchParams(window.location.search).get('token');
@@ -14,47 +20,104 @@ if (!token) {
 
 ui.loading('Cargando mesas...');
 
-let invitado = null;
-let mesas = [];
-let asientosSeleccionados = [];
-let pendingMove = null; // guardamos el asiento liberado pendiente de mover
+let state = {
+  invitado: null,
+  mesas: [],
+  confirmed: [],
+  draft: [],
+  pendingMove: null,
+  draftCounter: 0,
+  realtimeChannel: null,
+};
 
 // ---- Helpers ----
+const seatKey = (mesaId, posicion) => `${mesaId}:${posicion}`;
+
 function totalMenus() {
+  const inv = state.invitado || {};
   return (
-    (invitado.opciones_comun || 0) +
-    (invitado.opciones_celiacos || 0) +
-    (invitado.opciones_vegetarianos || 0) +
-    (invitado.opciones_veganos || 0)
+    (inv.opciones_comun || 0) +
+    (inv.opciones_celiacos || 0) +
+    (inv.opciones_vegetarianos || 0) +
+    (inv.opciones_veganos || 0)
   );
 }
 
-function recalcularAsientosSeleccionados() {
-  asientosSeleccionados = [];
-  for (const mesa of mesas) {
-    const arr = mesa.mesa_asientos || [];
-    for (const a of arr) {
-      if (a?.invitado_id === invitado.id) {
-        asientosSeleccionados.push({
-          mesa_id: mesa.id,
-          posicion: a.posicion,
-          id: a.id,
-          cambios: a.cambios || 0,
-        });
-      }
+function cloneConfirmedToDraft() {
+  state.draft = state.confirmed.map((seat) => ({
+    ...seat,
+    clientId: `seat-${seat.id}`,
+    originalMesaId: seat.mesa_id,
+    originalPosicion: seat.posicion,
+    isNew: false,
+    isMoved: false,
+    proposedCambios: seat.cambios,
+  }));
+  state.pendingMove = null;
+  updateConfirmButton();
+}
+
+function draftSeatsMap() {
+  const map = new Map();
+  state.draft.forEach((seat) => {
+    if (seat.mesa_id && seat.posicion) {
+      map.set(seatKey(seat.mesa_id, seat.posicion), seat);
+    }
+  });
+  return map;
+}
+
+function draftHasChanges() {
+  if (state.draft.length !== state.confirmed.length) return true;
+
+  const confirmedById = new Map();
+  state.confirmed.forEach((seat) => confirmedById.set(seat.id, seat));
+
+  for (const seat of state.draft) {
+    if (!seat.id) return true; // asiento nuevo
+    const original = confirmedById.get(seat.id);
+    if (!original) return true; // se liberó un asiento
+    if (seat.mesa_id !== original.mesa_id || seat.posicion !== original.posicion) {
+      return true;
+    }
+    if ((seat.proposedCambios || seat.cambios) !== original.cambios) {
+      return true;
     }
   }
+  return false;
+}
+
+function draftHasPendingSeatCount() {
+  return state.draft.length !== totalMenus();
+}
+
+function updateConfirmButton() {
+  const hasChanges = draftHasChanges();
+  const needsSeats = draftHasPendingSeatCount();
+
+  if (!hasChanges || needsSeats) {
+    confirmBtn.classList.add('hidden');
+    confirmBtn.disabled = true;
+    return;
+  }
+
+  confirmBtn.classList.remove('hidden');
+  confirmBtn.disabled = false;
 }
 
 function renderHeader() {
   const max = totalMenus();
-  const seleccionados = asientosSeleccionados.length;
-  const restantes = max - seleccionados;
+  const seleccionados = state.draft.length;
+  const restantes = Math.max(max - seleccionados, 0);
+  const cambiosPendientes = draftHasChanges();
+  const pendientesTexto = cambiosPendientes
+    ? '<span class="text-orange-500 font-semibold">Tenés cambios sin confirmar.</span>'
+    : '<span class="text-green-600 font-semibold">Todo guardado.</span>';
 
-  let html = `
+  const html = `
     <div class="mb-6 text-center bg-white/90 p-4 rounded-xl shadow">
       <p class="text-azuloscuro font-semibold">
-        Tenés <b>${max}</b> asiento${max > 1 ? 's' : ''} disponible${max > 1 ? 's' : ''}.
+        Tenés <b>${max}</b> asiento${max !== 1 ? 's' : ''} disponible${max !== 1 ? 's' : ''}.
       </p>
       <p class="text-sm text-gray-600">
         Seleccionaste ${seleccionados}, te quedan ${restantes}.
@@ -62,6 +125,7 @@ function renderHeader() {
       <p class="text-xs text-gray-500 mt-1">
         Podés cambiar cada asiento hasta <b>2 veces</b>.
       </p>
+      <p class="text-xs mt-2">${pendientesTexto}</p>
     </div>
   `;
 
@@ -72,9 +136,31 @@ function renderHeader() {
   mesasContainer.before(div);
 }
 
+function cargarDesdeMesas(dataMesas, invitadoId) {
+  state.mesas = dataMesas || [];
+  state.confirmed = [];
+
+  for (const mesa of state.mesas) {
+    const arr = mesa.mesa_asientos || [];
+    for (const asiento of arr) {
+      if (asiento?.invitado_id === invitadoId) {
+        state.confirmed.push({
+          id: asiento.id,
+          mesa_id: mesa.id,
+          posicion: asiento.posicion,
+          cambios: asiento.cambios || 0,
+        });
+      }
+    }
+  }
+  cloneConfirmedToDraft();
+}
+
 // ---- Cargar mesas e invitado ----
-async function cargarMesas() {
+async function cargarMesas({ showLoading = false } = {}) {
   try {
+    if (showLoading) ui.loading('Actualizando mesas...');
+
     const { data: user, error: userErr } = await supabase
       .from('invitados')
       .select('*')
@@ -82,7 +168,7 @@ async function cargarMesas() {
       .maybeSingle();
 
     if (userErr || !user) throw new Error('Token inválido');
-    invitado = user;
+    state.invitado = user;
 
     const { data: dataMesas, error: mesasErr } = await supabase
       .from('mesas')
@@ -102,207 +188,352 @@ async function cargarMesas() {
 
     if (mesasErr) throw mesasErr;
 
-    mesas = dataMesas || [];
-    recalcularAsientosSeleccionados();
-    ui.close();
-    renderHeader();
-    renderMesas();
+    cargarDesdeMesas(dataMesas, user.id);
+    render();
   } catch (err) {
-    ui.close();
     console.error(err);
     ui.error('Error al cargar las mesas.');
+  } finally {
+    ui.close();
   }
 }
 
-// ---- Renderizado ----
 function renderMesas() {
   mesasContainer.innerHTML = '';
-  mesas.forEach((mesa) => {
-    const div = document.createElement('div');
-    div.className =
+  const draftMap = draftSeatsMap();
+  const pendingFromKey = state.pendingMove
+    ? seatKey(state.pendingMove.fromMesaId, state.pendingMove.fromPosicion)
+    : null;
+
+  state.mesas.forEach((mesa) => {
+    const wrapper = document.createElement('div');
+    wrapper.className =
       'bg-white/90 rounded-2xl shadow-md p-5 flex flex-col items-center text-center transition-transform hover:scale-105 m-2';
-    div.innerHTML = `
-      <h2 class="text-azuloscuro font-bold mb-4">Mesa ${mesa.numero}</h2>
-      <div class="grid grid-cols-4 gap-3">
-        ${renderAsientos(mesa)}
-      </div>
-    `;
-    mesasContainer.appendChild(div);
-  });
-}
 
-function renderAsientos(mesa) {
-  const asientos = mesa.mesa_asientos || [];
-  const total = mesa.capacidad || 8;
-  const posiciones = Array.from({ length: total }, (_, i) => i + 1);
+    const header = document.createElement('h2');
+    header.className = 'text-azuloscuro font-bold mb-4';
+    header.textContent = `Mesa ${mesa.numero}`;
+    wrapper.appendChild(header);
 
-  const completos = posiciones.map((pos) => {
-    const real = asientos.find((a) => a.posicion === pos);
-    return (
-      real || {
-        posicion: pos,
-        invitado_id: null,
-        invitados: null,
+    const grid = document.createElement('div');
+    grid.className = 'grid grid-cols-4 gap-3';
+
+    const total = mesa.capacidad || 8;
+    for (let pos = 1; pos <= total; pos += 1) {
+      const real = (mesa.mesa_asientos || []).find((a) => a.posicion === pos) || null;
+      const key = seatKey(mesa.id, pos);
+      const draftSeat = draftMap.get(key);
+
+      const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
+      const esTuActual = !!real && real.invitado_id === state.invitado.id;
+      const estaReservadoPorVos = !!draftSeat;
+      const esAsientoNuevo = draftSeat?.isNew || draftSeat?.isMoved;
+      const esPendienteDesde = pendingFromKey === key;
+
+      const button = document.createElement('button');
+      button.dataset.mesa = mesa.id;
+      button.dataset.pos = pos;
+      button.className =
+        'asiento w-12 h-12 rounded-full flex items-center justify-center transition border';
+
+      const icon = document.createElement('i');
+      icon.classList.add('fa-solid');
+
+      let title = 'Disponible';
+      let labelText = 'Disponible';
+      let labelClass = 'text-transparent';
+
+      if (ocupadoPorOtro) {
+        button.classList.add('bg-rojo', 'text-white', 'cursor-not-allowed');
+        button.disabled = true;
+        icon.classList.add('fa-user-slash');
+        title = real?.invitados?.nombre || 'Ocupado';
+        labelText = real?.invitados?.nombre || 'Ocupado';
+        labelClass = 'text-gray-800';
+      } else if (estaReservadoPorVos) {
+        button.classList.add('border-4', 'border-emerald-400', 'bg-emerald-50');
+        icon.classList.add('fa-star', 'text-emerald-500');
+        title = esAsientoNuevo ? 'Nuevo asiento seleccionado' : 'Tu asiento';
+        labelText = esAsientoNuevo ? 'Nuevo' : 'Confirmado';
+        labelClass = 'text-emerald-600';
+      } else if (esPendienteDesde && esTuActual) {
+        button.classList.add('border', 'border-dashed', 'border-amber-400', 'bg-amber-50');
+        icon.classList.add('fa-person-walking-arrow-right');
+        title = 'Liberado para mover';
+        labelText = 'Moverás este asiento';
+        labelClass = 'text-amber-500';
+      } else if (esTuActual) {
+        button.classList.add('border-4', 'border-yellow-400', 'bg-yellow-50');
+        icon.classList.add('fa-star', 'text-yellow-400');
+        title = 'Tu asiento actual';
+        labelText = 'Actual';
+        labelClass = 'text-yellow-500';
+      } else {
+        button.classList.add(
+          'border',
+          'border-celeste',
+          'hover:border-azuloscuro',
+          'hover:bg-celeste/20'
+        );
+        icon.classList.add('fa-chair', 'text-amber-800');
       }
-    );
+
+      button.title = title;
+      button.appendChild(icon);
+
+      const container = document.createElement('div');
+      container.className = 'flex flex-col items-center justify-center text-center';
+      container.appendChild(button);
+
+      const label = document.createElement('p');
+      label.className = `text-sm mt-1 max-w-[120px] leading-tight ${labelClass}`;
+      label.textContent = labelText === 'Disponible' ? '.' : labelText;
+      container.appendChild(label);
+
+      grid.appendChild(container);
+    }
+
+    wrapper.appendChild(grid);
+    mesasContainer.appendChild(wrapper);
   });
-
-  return completos
-    .map((a) => {
-      const ocupado = a.invitado_id && a.invitado_id !== invitado.id;
-      const esTuAsiento = a.invitado_id === invitado.id;
-
-      let color = ocupado
-        ? 'bg-rojo text-white cursor-not-allowed'
-        : esTuAsiento
-          ? 'border-4 border-yellow-400'
-          : 'border border-celeste hover:border-azuloscuro hover:bg-celeste/20';
-
-      let icon = ocupado
-        ? '<i class="fa-solid fa-user-slash"></i>'
-        : esTuAsiento
-          ? '<i class="fa-solid fa-star text-yellow-400"></i>'
-          : '<i class="fa-solid fa-chair text-amber-800"></i>';
-
-      const nombre = ocupado
-        ? a.invitados?.nombre || 'Ocupado'
-        : esTuAsiento
-          ? 'Tu asiento'
-          : 'Disponible';
-
-      const label =
-        ocupado || esTuAsiento
-          ? `<p class="text-sm text-gray-800 mt-1 text-center max-w-[120px] leading-tight">${esTuAsiento ? 'Vos' : a.invitados?.nombre || '—'}</p>`
-          : '<p class="text-sm text-transparent mt-1 max-w-[120px] leading-tight">.</p>';
-
-      return `
-        <div class="flex flex-col items-center justify-center text-center">
-          <button
-            data-mesa="${mesa.id}"
-            data-pos="${a.posicion}"
-            class="asiento w-12 h-12 rounded-full flex items-center justify-center ${color} transition"
-            title="${nombre}"
-            ${ocupado ? 'disabled' : ''}
-          >
-            ${icon}
-          </button>
-          ${label}
-        </div>
-      `;
-    })
-    .join('');
 }
 
-// ---- Lógica de selección y cambios ----
-mesasContainer.addEventListener('click', async (e) => {
-  const btn = e.target.closest('.asiento');
-  if (!btn || btn.disabled) return;
+function render() {
+  renderHeader();
+  renderMesas();
+  updateConfirmButton();
+}
 
-  const mesaId = parseInt(btn.dataset.mesa, 10);
-  const pos = parseInt(btn.dataset.pos, 10);
+function findDraftSeatByKey(mesaId, posicion) {
+  return state.draft.find((seat) => seat.mesa_id === mesaId && seat.posicion === posicion);
+}
+
+function findDraftSeatByClientId(clientId) {
+  return state.draft.find((seat) => seat.clientId === clientId);
+}
+
+function beginMoveSeat(seat, mesaId, posicion) {
+  if (state.pendingMove) {
+    ui.info('Primero ubicá el asiento que ya estás moviendo.');
+    return;
+  }
+  if (seat.cambios >= 2) {
+    ui.info('No podés cambiar este asiento más de 2 veces.');
+    return;
+  }
+
+  state.pendingMove = {
+    clientId: seat.clientId,
+    fromMesaId: mesaId,
+    fromPosicion: posicion,
+  };
+  render();
+  ui.info('Elegí el nuevo lugar para este asiento.');
+}
+
+function cancelPendingMove() {
+  state.pendingMove = null;
+  render();
+}
+
+function removeDraftSeat(seat) {
+  state.draft = state.draft.filter((item) => item.clientId !== seat.clientId);
+  render();
+}
+
+function assignPendingMove(targetMesaId, targetPos) {
+  const move = state.pendingMove;
+  if (!move) return;
+
+  const seat = findDraftSeatByClientId(move.clientId);
+  if (!seat) {
+    cancelPendingMove();
+    return;
+  }
+
+  const nextCambios = (seat.cambios || 0) + 1;
+  if (nextCambios > 2) {
+    ui.info('No podés cambiar este asiento más de 2 veces.');
+    cancelPendingMove();
+    return;
+  }
+
+  const alreadyTaken = findDraftSeatByKey(targetMesaId, targetPos);
+  if (alreadyTaken) {
+    ui.info('Ya seleccionaste ese lugar. Elegí otro.');
+    return;
+  }
+
+  seat.mesa_id = targetMesaId;
+  seat.posicion = targetPos;
+  seat.isMoved = true;
+  seat.proposedCambios = nextCambios;
+
+  state.pendingMove = null;
+  render();
+}
+
+function addNewDraftSeat(mesaId, posicion) {
   const max = totalMenus();
-
-  // Buscar asiento actual en DB
-  const { data: asientoExistente, error: qErr } = await supabase
-    .from('mesa_asientos')
-    .select('*')
-    .eq('mesa_id', mesaId)
-    .eq('posicion', pos)
-    .maybeSingle();
-
-  if (qErr) {
-    console.error(qErr);
-    ui.error('No se pudo verificar el estado del asiento');
+  if (state.draft.length >= max) {
+    ui.info('Ya seleccionaste todos tus asientos disponibles.');
     return;
   }
 
-  // Si es tu asiento -> liberar (para cambiar)
-  if (asientoExistente?.invitado_id === invitado.id) {
-    const cambios = asientoExistente.cambios || 0;
-    if (cambios >= 2) {
-      ui.info('No podés cambiar este asiento más de 2 veces');
-      return;
-    }
+  state.draftCounter += 1;
+  state.draft.push({
+    id: null,
+    mesa_id: mesaId,
+    posicion,
+    cambios: 0,
+    proposedCambios: 0,
+    isNew: true,
+    isMoved: false,
+    originalMesaId: null,
+    originalPosicion: null,
+    clientId: `new-${state.draftCounter}`,
+  });
 
-    ui.loading('Liberando asiento...');
-    try {
-      await supabase
-        .from('mesa_asientos')
-        .update({ invitado_id: null })
-        .eq('id', asientoExistente.id);
+  render();
+}
 
-      pendingMove = { id: asientoExistente.id, cambios };
-      asientosSeleccionados = asientosSeleccionados.filter(
-        (a) => !(a.mesa_id === mesaId && a.posicion === pos)
-      );
+function handleSeatClick(mesaId, posicion) {
+  const mesa = state.mesas.find((m) => m.id === mesaId);
+  if (!mesa) return;
 
-      ui.close();
-      ui.success('Asiento liberado. Elegí un nuevo lugar');
-      renderHeader();
-      await cargarMesas();
-    } catch (err) {
-      ui.close();
-      console.error(err);
-      ui.error('Error al liberar el asiento');
-    }
+  const real = (mesa.mesa_asientos || []).find((a) => a.posicion === posicion) || null;
+  const draftSeat = findDraftSeatByKey(mesaId, posicion);
+  const pending = state.pendingMove;
+
+  const ocupadoPorOtro = real?.invitado_id && real.invitado_id !== state.invitado.id;
+  if (ocupadoPorOtro) {
+    ui.info('Ese asiento ya está ocupado.');
     return;
   }
 
-  // Si ocupado por otro
-  if (asientoExistente?.invitado_id && asientoExistente.invitado_id !== invitado.id) {
-    ui.info('Ese asiento ya está ocupado');
+  // Click sobre asiento nuevo en draft -> quitar
+  if (draftSeat && draftSeat.isNew) {
+    removeDraftSeat(draftSeat);
     return;
   }
 
-  // Control de cantidad de asientos disponibles
-  if (!pendingMove && asientosSeleccionados.length >= max) {
-    ui.info('Ya seleccionaste todos tus asientos disponibles');
+  // Click sobre asiento en movimiento -> cancelar
+  if (pending && pending.fromMesaId === mesaId && pending.fromPosicion === posicion) {
+    cancelPendingMove();
     return;
   }
 
-  ui.loading(pendingMove ? 'Cambiando de asiento...' : 'Guardando tu selección...');
+  // Click sobre asiento propio (confirmado o movido)
+  if (draftSeat && !draftSeat.isNew) {
+    beginMoveSeat(draftSeat, mesaId, posicion);
+    return;
+  }
+
+  // Si hay pendiente, intentar asignar
+  if (pending) {
+    assignPendingMove(mesaId, posicion);
+    return;
+  }
+
+  // Evitar doble selección sobre asiento libre si ya lo tomó otro en la vista
+  if (draftSeat) {
+    ui.info('Ese asiento ya lo tenés reservado.');
+    return;
+  }
+
+  // Asiento disponible
+  addNewDraftSeat(mesaId, posicion);
+}
+
+mesasContainer.addEventListener('click', (e) => {
+  const btn = e.target.closest('.asiento');
+  if (!btn) return;
+  const mesaId = parseInt(btn.dataset.mesa, 10);
+  const posicion = parseInt(btn.dataset.pos, 10);
+  if (Number.isNaN(mesaId) || Number.isNaN(posicion)) return;
+  handleSeatClick(mesaId, posicion);
+});
+
+confirmBtn.addEventListener('click', async () => {
+  if (confirmBtn.disabled) return;
+  const pending = draftHasChanges();
+  if (!pending) {
+    ui.info('No hay cambios para confirmar.');
+    return;
+  }
+
+  const max = totalMenus();
+  if (state.draft.length !== max) {
+    ui.info(`Debés seleccionar ${max} asiento${max !== 1 ? 's' : ''} antes de confirmar.`);
+    return;
+  }
+
   try {
-    // Evitar duplicados si ya hay un row vacío con ese lugar
-    await supabase
-      .from('mesa_asientos')
-      .delete()
-      .eq('mesa_id', mesaId)
-      .eq('posicion', pos)
-      .is('invitado_id', null);
+    ui.loading('Confirmando selección...');
 
-    if (pendingMove) {
-      // Mover el asiento liberado
-      const { error: updErr } = await supabase
-        .from('mesa_asientos')
-        .update({
-          mesa_id: mesaId,
-          posicion: pos,
-          invitado_id: invitado.id,
-          cambios: pendingMove.cambios + 1,
-        })
-        .eq('id', pendingMove.id);
+    const payload = {
+      token,
+      asientos: state.draft.map((seat) => ({
+        id: seat.id,
+        mesa_id: seat.mesa_id,
+        posicion: seat.posicion,
+        original_mesa_id: seat.originalMesaId,
+        original_posicion: seat.originalPosicion,
+        cambios: seat.proposedCambios ?? seat.cambios,
+      })),
+    };
 
-      if (updErr) throw updErr;
-      pendingMove = null;
-    } else {
-      // Nuevo asiento (si no hay pendiente)
-      const { error: insErr } = await supabase
-        .from('mesa_asientos')
-        .insert([{ mesa_id: mesaId, posicion: pos, invitado_id: invitado.id, cambios: 0 }]);
-
-      if (insErr) throw insErr;
-    }
+    const response = await post(CONFIRM_ENDPOINT, payload);
+    const data = JSON.parse(response || '{}');
 
     ui.close();
-    ui.success('Asiento guardado correctamente');
-    await cargarMesas();
-    recalcularAsientosSeleccionados();
-    renderHeader();
+    ui.success(data?.message || '¡Listo! Guardamos tu selección.');
+    await cargarMesas({ showLoading: true });
   } catch (err) {
-    ui.close();
     console.error(err);
-    ui.error('No se pudo guardar tu selección');
+    ui.close();
+    try {
+      const parsed = JSON.parse(err.message);
+      ui.error(parsed?.error || 'No pudimos guardar tus asientos.');
+    } catch (_) {
+      ui.error(err.message || 'No pudimos guardar tus asientos.');
+    }
   }
 });
 
-cargarMesas();
+async function renderRealtimeUpdate() {
+  if (draftHasChanges()) return;
+  await cargarMesas();
+}
+
+function subscribeRealtime() {
+  if (state.realtimeChannel) return;
+
+  const channel = supabase
+    .channel('mesa-asientos-changes')
+    .on(
+      'postgres_changes',
+      {
+        event: '*',
+        schema: 'public',
+        table: 'mesa_asientos',
+      },
+      () => {
+        renderRealtimeUpdate();
+      }
+    )
+    .subscribe();
+
+  state.realtimeChannel = channel;
+}
+
+window.addEventListener('beforeunload', () => {
+  state.realtimeChannel?.unsubscribe();
+});
+
+async function init() {
+  await cargarMesas();
+  subscribeRealtime();
+}
+
+init();
