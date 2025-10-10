@@ -4,10 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Retiro de Entradas – Cena UNSJ</title>
-    <link rel="icon" type="image/webp" href="/assets/logo-C-Xvo68V.webp" />
+    <link rel="icon" type="image/webp" href="/assets/logo-C-Xvo68V.webp" />
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
-    <script type="module" crossorigin src="/assets/retiro-CW8ZLABX.js"></script>
+    <script type="module" crossorigin src="/assets/retiro-Bwbaw7OM.js"></script>
     <link rel="modulepreload" crossorigin href="/assets/ui-Cf0ssn9_.js">
     <link rel="stylesheet" crossorigin href="/assets/ui-xGB0bmQI.css">
   </head>
@@ -50,35 +50,38 @@
             required
           />
         </div>
-        <!-- Nombre -->
-        <div>
-          <label
-            for="nombre"
-            class="block text-sm font-semibold text-azuloscuro mb-1"
-            >Nombre</label
-          >
-          <input
-            id="nombre"
-            name="nombre"
-            type="text"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
-          />
-        </div>
+        <section id="datosInvitado" class="space-y-6 hidden">
+          <!-- Nombre -->
+          <div>
+            <label
+              for="nombre"
+              class="block text-sm font-semibold text-azuloscuro mb-1"
+              >Nombre</label
+            >
+            <input
+              id="nombre"
+              name="nombre"
+              type="text"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+              disabled
+            />
+          </div>
 
-        <!-- Correo -->
-        <div>
-          <label
-            for="correo"
-            class="block text-sm font-semibold text-azuloscuro mb-1"
-            >Correo</label
-          >
-          <input
-            id="correo"
-            name="correo"
-            type="email"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
-          />
-        </div>
+          <!-- Correo -->
+          <div>
+            <label
+              for="correo"
+              class="block text-sm font-semibold text-azuloscuro mb-1"
+              >Correo</label
+            >
+            <input
+              id="correo"
+              name="correo"
+              type="email"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+              disabled
+            />
+          </div>
 
           <!-- Menús -->
           <div
@@ -96,7 +99,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -111,7 +114,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -126,7 +129,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -141,7 +144,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
           </div>
@@ -169,6 +172,7 @@
               id="submitBtn"
               type="submit"
               class="bg-azuloscuro hover:bg-azul text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50 w-full p-2"
+              disabled
             >
               Confirmar retiro
             </button>
@@ -180,6 +184,6 @@
     <footer class="text-center py-6 mt-10 text-crema/80 text-sm">
       <p>© <span id="anio"></span> · Rectorado – Universidad Nacional de San Juan</p>
     </footer>
-
+
   </body>
 </html>

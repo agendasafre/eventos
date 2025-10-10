@@ -8,7 +8,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "deploy": "pnpm run build && git add . && git commit -m \"$npm_config_msg\" && git push"
+    "deploy": "pnpm run build && git add . && git commit -m \"${npm_config_msg:-auto deploy}\" && git push"
   },
   "keywords": [],
   "author": "",

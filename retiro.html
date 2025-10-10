@@ -48,35 +48,38 @@
             required
           />
         </div>
-        <!-- Nombre -->
-        <div>
-          <label
-            for="nombre"
-            class="block text-sm font-semibold text-azuloscuro mb-1"
-            >Nombre</label
-          >
-          <input
-            id="nombre"
-            name="nombre"
-            type="text"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
-          />
-        </div>
+        <section id="datosInvitado" class="space-y-6 hidden">
+          <!-- Nombre -->
+          <div>
+            <label
+              for="nombre"
+              class="block text-sm font-semibold text-azuloscuro mb-1"
+              >Nombre</label
+            >
+            <input
+              id="nombre"
+              name="nombre"
+              type="text"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+              disabled
+            />
+          </div>
 
-        <!-- Correo -->
-        <div>
-          <label
-            for="correo"
-            class="block text-sm font-semibold text-azuloscuro mb-1"
-            >Correo</label
-          >
-          <input
-            id="correo"
-            name="correo"
-            type="email"
-            class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
-          />
-        </div>
+          <!-- Correo -->
+          <div>
+            <label
+              for="correo"
+              class="block text-sm font-semibold text-azuloscuro mb-1"
+              >Correo</label
+            >
+            <input
+              id="correo"
+              name="correo"
+              type="email"
+              class="w-full border border-gray-300 rounded-lg px-3 py-2 p-1 bg-gray-50 text-azuloscuro"
+              disabled
+            />
+          </div>
 
           <!-- Menús -->
           <div
@@ -94,7 +97,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -109,7 +112,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -124,7 +127,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
             <div>
@@ -139,7 +142,7 @@
                 type="number"
                 min="0"
                 class="w-full border border-gray-300 rounded-lg px-2 py-1 text-center bg-gray-50 p-1 text-azuloscuro"
-                readonly
+                disabled
               />
             </div>
           </div>
@@ -167,6 +170,7 @@
               id="submitBtn"
               type="submit"
               class="bg-azuloscuro hover:bg-azul text-white font-semibold py-2 px-6 rounded-lg transition disabled:opacity-50 w-full p-2"
+              disabled
             >
               Confirmar retiro
             </button>

@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase.js';
-import { post } from '../lib/api.js';
 import { ui } from '../ui.js';
 
 // En dev podés pegar la URL de Vercel si no tenés proxy:
@@ -22,9 +21,56 @@ const totalNum = $('#totalNum');
 const pulserasContainer = $('#pulserasContainer');
 const listaPulseras = $('#listaPulseras');
 const submitBtn = $('#submitBtn');
+const datosInvitadoSection = $('#datosInvitado');
+
+const camposFormulario = [
+  nombreInput,
+  correoInput,
+  comunInput,
+  celiacosInput,
+  vegetarianosInput,
+  veganosInput,
+];
+
+const camposMenu = [comunInput, celiacosInput, vegetarianosInput, veganosInput];
 
 let invitado = null;
 let dniValido = false;
+
+function resetFormulario() {
+  nombreInput.value = '';
+  correoInput.value = '';
+  camposMenu.forEach((el) => {
+    el.value = '0';
+  });
+  totalNum.textContent = '0';
+  listaPulseras.innerHTML = '';
+  pulserasContainer.classList.add('hidden');
+}
+
+function ocultarFormulario({ reset = true } = {}) {
+  datosInvitadoSection.classList.add('hidden');
+  camposFormulario.forEach((el) => {
+    el.disabled = true;
+  });
+  submitBtn.disabled = true;
+  if (reset) resetFormulario();
+}
+
+function mostrarFormulario() {
+  datosInvitadoSection.classList.remove('hidden');
+  camposFormulario.forEach((el) => {
+    el.disabled = false;
+  });
+  actualizarUI();
+}
+
+function deshabilitarFormulario() {
+  camposFormulario.forEach((el) => {
+    el.disabled = true;
+  });
+  submitBtn.disabled = true;
+}
 
 // ---- Helpers ----
 const int = (v) => (Number.isNaN(parseInt(v, 10)) ? 0 : parseInt(v, 10));
@@ -37,19 +83,12 @@ function totalMenus() {
   );
 }
 
-function bloquearInputs(bloquear = true) {
-  const fields = [comunInput, celiacosInput, vegetarianosInput, veganosInput];
-  fields.forEach((el) => {
-    if (bloquear) el.setAttribute('readonly', true);
-    else el.removeAttribute('readonly');
-  });
-  submitBtn.disabled = bloquear || totalMenus() < 1;
-}
-
 function actualizarUI() {
   const total = totalMenus();
   totalNum.textContent = total;
-  submitBtn.disabled = !dniValido || total < 1;
+  const nombreOk = nombreInput.value.trim().length > 0;
+  const correoOk = correoInput.value.trim().length > 0;
+  submitBtn.disabled = !dniValido || nombreInput.disabled;
 }
 
 function mostrarPulseras(numeros) {
@@ -81,10 +120,21 @@ async function obtenerPulserasPorDNI(dni, limit = null) {
   return (data || []).map((r) => r.numero);
 }
 
-// ---- Validar DNI (flujo original) ----
+ocultarFormulario();
+
+// ---- Validar DNI ----
 dniInput.addEventListener('blur', async () => {
   const dni = dniInput.value.trim();
-  if (!dni) return;
+  if (!dni) {
+    invitado = null;
+    dniValido = false;
+    ocultarFormulario();
+    return;
+  }
+
+  invitado = null;
+  dniValido = false;
+  ocultarFormulario();
 
   ui.loading('Verificando DNI...');
   try {
@@ -97,71 +147,68 @@ dniInput.addEventListener('blur', async () => {
     ui.close();
 
     if (error || !data) {
-      dniValido = false;
       ui.error('DNI no encontrado o no habilitado.');
-      bloquearInputs(true);
-      pulserasContainer.classList.add('hidden');
       return;
     }
 
     invitado = data;
+    if (data.retiro === true || data.estado === 'retirado') {
+      nombreInput.value = data.nombre || '';
+      correoInput.value = data.correo || '';
+      comunInput.value = int(data.opciones_comun);
+      celiacosInput.value = int(data.opciones_celiacos);
+      vegetarianosInput.value = int(data.opciones_vegetarianos);
+      veganosInput.value = int(data.opciones_veganos);
+      totalNum.textContent = totalMenus();
+      deshabilitarFormulario();
+      datosInvitadoSection.classList.remove('hidden');
+      ui.info('Este invitado ya retiró sus entradas.');
+      const numeros = await obtenerPulserasPorDNI(dni);
+      if (numeros.length) {
+        mostrarPulseras(numeros);
+      }
+      invitado = null;
+      return;
+    }
+
+    if (data.estado !== 'registrado') {
+      ui.info('El invitado no completó el registro.');
+      invitado = null;
+      return;
+    }
+
     nombreInput.value = data.nombre || '';
     correoInput.value = data.correo || '';
+    comunInput.value = int(data.opciones_comun);
+    celiacosInput.value = int(data.opciones_celiacos);
+    vegetarianosInput.value = int(data.opciones_vegetarianos);
+    veganosInput.value = int(data.opciones_veganos);
 
-    // 1️⃣ No aceptó términos
-    if (!data.acepto_terminos) {
-      dniValido = false;
-      ui.info('El invitado no aceptó los términos.');
-      bloquearInputs(true);
-      pulserasContainer.classList.add('hidden');
-      return;
-    }
-
-    // 2️⃣ Ya retiró -> mostrar solo SUS pulseras
-    if (data.retiro === true) {
-      dniValido = false;
-      ui.info('Este invitado ya retiró sus entradas.');
-      bloquearInputs(true);
-
-      // Traer solo las pulseras de este invitado
-      const { data: asignadas, error: errAsig } = await supabase
-        .from('entradas')
-        .select('numero')
-        .eq('dni_titular', dni)
-        .eq('entregado', true)
-        .order('numero', { ascending: true });
-
-      if (!errAsig && asignadas?.length) {
-        const numeros = asignadas.map((e) => e.numero);
-        mostrarPulseras(numeros);
-      } else {
-        pulserasContainer.classList.add('hidden');
-      }
-      return;
-    }
-
-    // 3️⃣ Caso normal (aún no retiró)
-    comunInput.value = data.opciones_comun || 0;
-    celiacosInput.value = data.opciones_celiacos || 0;
-    vegetarianosInput.value = data.opciones_vegetarianos || 0;
-    veganosInput.value = data.opciones_veganos || 0;
-
-    dniValido = true;
-    bloquearInputs(false);
-    actualizarUI();
-    ui.success('DNI validado. Podés registrar el retiro.');
     pulserasContainer.classList.add('hidden');
+    listaPulseras.innerHTML = '';
+    dniValido = true;
+    mostrarFormulario();
+    actualizarUI();
+    ui.success(`Invitado validado. Total de menús: ${totalMenus()}.`);
   } catch (err) {
     ui.close();
     console.error(err);
     ui.error('Error al verificar el DNI.');
-    bloquearInputs(true);
-    pulserasContainer.classList.add('hidden');
+    invitado = null;
+    dniValido = false;
   }
 });
 
-// ---- Cambios en cantidades de menú ----
-[comunInput, celiacosInput, vegetarianosInput, veganosInput].forEach((el) => {
+// ---- Cambios en campos editables ----
+camposMenu.forEach((el) => {
+  el.addEventListener('input', () => {
+    const valor = int(el.value);
+    el.value = valor < 0 ? '0' : `${valor}`;
+    actualizarUI();
+  });
+});
+
+[nombreInput, correoInput].forEach((el) => {
   el.addEventListener('input', actualizarUI);
 });
 
@@ -170,14 +217,34 @@ form.addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!dniValido || !invitado) return ui.error('Validá primero el DNI.');
 
+  const errores = [];
+  const nombre = nombreInput.value.trim();
+  const correo = correoInput.value.trim();
   const total = totalMenus();
-  if (total < 1) return ui.info('El total de menús debe ser mayor a 0.');
 
+  if (!nombre) errores.push('Completá el nombre.');
+  if (!correo) errores.push('Completá el correo.');
+  if (total < 1) errores.push('Seleccioná al menos un menú.');
+
+  if (errores.length) {
+    ui.info(errores.join(' '));
+    if (!nombre) {
+      nombreInput.focus();
+    } else if (!correo) {
+      correoInput.focus();
+    } else {
+      comunInput.focus();
+    }
+    return;
+  }
+  
   try {
     ui.loading('Registrando retiro...');
 
     const payload = {
       dni: invitado.dni,
+      nombre: nombreInput.value.trim(),
+      correo: correoInput.value.trim(),
       comun: int(comunInput.value),
       celiacos: int(celiacosInput.value),
       vegetarianos: int(vegetarianosInput.value),
@@ -197,9 +264,10 @@ form.addEventListener('submit', async (e) => {
     mostrarPulseras(data.numeros);
 
     ui.close();
-    ui.success('Retiro registrado y correo enviado.');
-    bloquearInputs(true);
+    ui.success(data?.message || 'Retiro registrado y correo enviado.');
+    deshabilitarFormulario();
     dniValido = false;
+    invitado.retiro = true;
   } catch (err) {
     ui.close();
     console.error(err);
