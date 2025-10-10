@@ -152,7 +152,7 @@ dniInput.addEventListener('blur', async () => {
     }
 
     invitado = data;
-    if (data.retiro === true || data.estado === 'retirado') {
+    if (data.retiro === true) {
       nombreInput.value = data.nombre || '';
       correoInput.value = data.correo || '';
       comunInput.value = int(data.opciones_comun);
