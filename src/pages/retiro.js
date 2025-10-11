@@ -1,6 +1,41 @@
 import { supabase } from '../lib/supabase.js';
 import { ui } from '../ui.js';
 
+
+// Protección simple por clave
+const ACCESS_KEY = import.meta.env.VITE_INTERNAL_KEY; // definida en .env
+const storedKey = sessionStorage.getItem('internal_key');
+
+async function pedirClave() {
+  const { value: clave } = await Swal.fire({
+    title: 'Acceso restringido',
+    input: 'password',
+    inputLabel: 'Ingresá la clave de acceso',
+    inputPlaceholder: '••••••',
+    confirmButtonText: 'Entrar',
+    background: '#f1faee',
+    color: '#1d3557',
+    allowOutsideClick: false,
+  });
+  if (clave === ACCESS_KEY) {
+    sessionStorage.setItem('internal_key', clave);
+    return true;
+  } else {
+    await Swal.fire({
+      icon: 'error',
+      title: 'Clave incorrecta',
+      text: 'No tenés autorización para acceder.',
+      confirmButtonColor: '#457b9d',
+    });
+    return pedirClave();
+  }
+}
+
+if (storedKey !== ACCESS_KEY) {
+  await pedirClave();
+}
+
+
 // En dev podés pegar la URL de Vercel si no tenés proxy:
 const ENDPOINT = import.meta.env.DEV
   ? 'https://cena-unsj.vercel.app/api/retirar'
