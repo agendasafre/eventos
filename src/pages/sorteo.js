@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase.js';
+import JSConfetti from 'js-confetti';
 import Swal from 'sweetalert2';
 
 // Protección simple por clave
@@ -41,7 +42,6 @@ const btnStart = document.getElementById('btnStart');
 const winnerEl = document.getElementById('winner');
 const winnerName = document.getElementById('winnerName');
 const btnNext = document.getElementById('btnNext');
-const confettiEl = document.getElementById('confetti');
 
 // 🔊 Sonidos
 import drumrollFile from '../assets/sounds/drumroll.mp3';
@@ -51,6 +51,9 @@ const fanfare = new Audio(fanfareFile);
 drumroll.volume = 0.6;
 fanfare.volume = 0.8;
 
+// 🎊 Instancia de js-confetti
+const jsConfetti = new JSConfetti();
+
 const DURATION_MS = 4500;
 const TICK_MIN_MS = 45;
 const TICK_MAX_MS = 120;
@@ -58,7 +61,6 @@ const TICK_MAX_MS = 120;
 let running = false;
 
 const sleep = (ms) => new Promise((res) => setTimeout(res, ms));
-const shuffle = (arr) => arr.sort(() => Math.random() - 0.5);
 const easeOutQuad = (t) => t * (2 - t);
 
 function setSlotDisplay(entrada) {
@@ -68,33 +70,11 @@ function setSlotDisplay(entrada) {
 function showWinner(entrada) {
   winnerName.textContent = `Nº ${entrada.numero}`;
   winnerEl.classList.add('show');
-  fireConfetti();
 }
 
 function hideWinner() {
   winnerEl.classList.remove('show');
-  clearConfetti();
-}
-
-function fireConfetti() {
-  clearConfetti();
-  const colors = ['#fff176', '#a5d6a7', '#81d4fa', '#f48fb1', '#ffd54f', '#b39ddb'];
-  const total = 400; // 🎉 antes eran 100 → ahora 4x más confeti
-  for (let i = 0; i < total; i++) {
-    const d = document.createElement('div');
-    d.className = 'dot';
-    d.style.left = Math.random() * 100 + 'vw';
-    d.style.background = colors[Math.floor(Math.random() * colors.length)];
-    d.style.animationDuration = 3 + Math.random() * 4 + 's';
-    d.style.width = d.style.height = 6 + Math.random() * 6 + 'px';
-    d.style.opacity = 0.8 + Math.random() * 0.2;
-    confettiEl.appendChild(d);
-  }
-}
-
-
-function clearConfetti() {
-  confettiEl.innerHTML = '';
+  jsConfetti.clearCanvas();
 }
 
 async function startSorteo() {
@@ -138,10 +118,11 @@ async function startSorteo() {
     await sleep(16);
   }
 
-  // 🔇 Parar redoblante, mostrar ganador
+  // 🔇 Parar redoblante
   drumroll.pause();
   drumroll.currentTime = 0;
 
+  // Mostrar ganador
   setSlotDisplay(ganador);
   showWinner(ganador);
 
@@ -149,12 +130,24 @@ async function startSorteo() {
   fanfare.currentTime = 0;
   fanfare.play();
 
+  // 🎉 Efectos de confeti sincronizados
+  jsConfetti.addConfetti({
+    emojis: ['🎉', '🥳', '🎊'],
+    emojiSize: 42,
+    confettiNumber: 60,
+  });
+
+  jsConfetti.addConfetti({
+    confettiColors: ['#f1faee', '#1d3557', '#e63946', '#ffb703', '#fb8500', '#219ebc', '#8ecae6', '#8338ec', '#06d6a0', '#ffd166'],
+    confettiRadius: 6,
+    confettiNumber: 800,
+  });
+
   await supabase.from('entradas').update({ sorteado: true }).eq('numero', ganador.numero);
 
   btnNext.disabled = false;
   running = false;
 }
-
 
 async function nextRound() {
   btnNext.disabled = true;

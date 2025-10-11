@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.74.0",
+    "js-confetti": "^0.13.1",
     "sweetalert2": "^11.24.1"
   }
 }
