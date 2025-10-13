@@ -47,7 +47,6 @@ function actualizarUI() {
   const total = calcularTotal();
   const ok =
     dniValido &&
-    nombreInput.value.trim() !== '' &&
     emailOk(correoInput.value) &&
     lugarSelect.value.trim() !== '' &&
     total >= 1;
@@ -59,7 +58,7 @@ function actualizarUI() {
 [comunInput, celiacosInput, vegetarianosInput, veganosInput].forEach((el) => {
   el.addEventListener('input', actualizarUI);
 });
-[nombreInput, correoInput, lugarSelect].forEach((el) => {
+[correoInput, lugarSelect].forEach((el) => {
   el.addEventListener('input', actualizarUI);
 });
 
@@ -92,10 +91,14 @@ dniInput.addEventListener('blur', async () => {
       return ui.info('Este DNI ya retiró su entrada.');
     }
 
+    // Autocompletar y bloquear el nombre desde la base
+    nombreInput.value = data.nombre || '';
+    nombreInput.disabled = true;
+
     dniValido = true;
     actualizarUI();
     ui.success('DNI validado correctamente.');
-    nombreInput.focus();
+    correoInput.focus();
   } catch (err) {
     ui.close();
     dniValido = false;
@@ -139,3 +142,5 @@ submitBtn.disabled = true;
 actualizarUI();
 $('#anio').textContent = new Date().getFullYear();
 dniInput.focus();
+// El nombre siempre se completa desde la base y no es editable
+nombreInput.disabled = true;

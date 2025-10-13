@@ -14,9 +14,9 @@ export default async function handler(req, res) {
     return res.status(500).send('Falta configuración del servidor.');
   }
 
-  const { dni, nombre, correo, lugar, comun = 0, celiacos = 0, vegetarianos = 0, veganos = 0 } = req.body || {};
+  const { dni, correo, lugar, comun = 0, celiacos = 0, vegetarianos = 0, veganos = 0 } = req.body || {};
 
-  if (!dni || !nombre || !correo || !lugar) {
+  if (!dni || !correo || !lugar) {
     return res.status(400).send('Faltan datos obligatorios.');
   }
 
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     // 1️⃣ Verificar si el invitado está autorizado
     const { data: invitado, error: findErr } = await supabase
       .from('invitados')
-      .select('id, retiro')
+      .select('id, nombre, retiro')
       .eq('dni', dni)
       .single();
 
@@ -55,11 +55,11 @@ export default async function handler(req, res) {
       return res.status(409).send('Este DNI ya retiró su entrada.');
     }
 
-    // 2️⃣ Actualizar datos en la tabla invitados
+    // 2️⃣ Actualizar datos en la tabla invitados (nombre tomado desde la base)
     const { error: updErr } = await supabase
       .from('invitados')
       .update({
-        nombre,
+        nombre: invitado.nombre,
         correo,
         acepto_terminos: true,
         lugar_trabajo: lugar,
@@ -81,7 +81,7 @@ export default async function handler(req, res) {
     const mailPayload = {
       action: 'mail_registro',
       dni,
-      nombre,
+      nombre: invitado.nombre,
       correo,
       comun: numComun,
       celiacos: numCeliacos,
