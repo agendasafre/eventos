@@ -11,6 +11,7 @@ export default defineConfig({
         retiro: resolve(__dirname, 'retiro.html'),
         mesas: resolve(__dirname, 'mesas.html'),
         sorteo: resolve(__dirname, 'sorteo.html'),
+        manual: resolve(__dirname, 'manual.html'),
       },
     },
   },
