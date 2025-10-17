@@ -2,7 +2,9 @@ import { supabase } from '../lib/supabase.js';
 import { post } from '../lib/api.js';
 import { ui } from '../ui.js';
 
-const ENDPOINT = '/api/register';
+const ENDPOINT = import.meta.env.DEV
+  ? 'https://cena-unsj.vercel.app/api/register'
+  : '/api/register';
 const FECHA_LIMITE = new Date('2025-11-28T23:59:59');
 
 const $ = (sel, parent = document) => parent.querySelector(sel);

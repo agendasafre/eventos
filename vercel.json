@@ -16,6 +16,10 @@
     {
       "source": "/sorteo",
       "destination": "/sorteo.html"
+    },
+    {
+      "source": "/manual",
+      "destination": "/manual.html"
     }
   ]
 }
