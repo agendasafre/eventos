@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     // 1) Invitado
     const { data: invitado, error: errInv } = await supabase
       .from('invitados')
-      .select('id, nombre, correo, retiro, estado, mesa_token, opciones_comun, opciones_celiacos, opciones_vegetarianos, opciones_veganos')
+      .select('id, nombre, correo, retiro, estado, mesa_token, opciones_comun, opciones_celiacos, opciones_vegetarianos, opciones_veganos, es_manual')
       .eq('dni', dni)
       .maybeSingle();
     if (errInv) throw errInv;
