@@ -31,8 +31,25 @@
             <input id="correo" name="correo" type="email" required class="w-full rounded-lg border-gray-300 p-2 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro text-azuloscuro" />
           </div>
           <div>
-            <label for="lugar" class="block text-sm font-medium text-gray-700 mb-1">Lugar de trabajo (opcional)</label>
-            <input id="lugar" name="lugar" type="text" class="w-full rounded-lg border-gray-300 p-2 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro text-azuloscuro" />
+            <label for="lugar" class="block text-sm font-medium text-gray-700 mb-1">Lugar de trabajo</label>
+            <select
+              id="lugar"
+              name="lugar"
+              required
+              class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro p-2 text-azuloscuro transition"
+            >
+              <option value="" disabled selected>Seleccioná tu lugar de trabajo</option>
+              <option value="Rectorado">Rectorado</option>
+              <option value="Facultad de Ciencias Exactas, Físicas y Naturales">Facultad de Ciencias Exactas, Físicas y Naturales</option>
+              <option value="Facultad de Ingeniería">Facultad de Ingeniería</option>
+              <option value="Facultad de Ciencias Sociales">Facultad de Ciencias Sociales</option>
+              <option value="Facultad de Filosofía, Humanidades y Artes">Facultad de Filosofía, Humanidades y Artes</option>
+              <option value="Facultad de Arquitectura, Urbanismo y Diseño">Facultad de Arquitectura, Urbanismo y Diseño</option>
+              <option value="Escuela Universitaria de Ciencias de la Salud">Escuela Universitaria de Ciencias de la Salud</option>
+              <option value='IPU - Escuela Industrial "Domingo F. Sarmiento"'>IPU - Escuela Industrial "Domingo F. Sarmiento"</option>
+              <option value='IPU - Escuela de Comercio "Lib. Gral. San Martín"'>IPU - Escuela de Comercio "Lib. Gral. San Martín"</option>
+              <option value='IPU - Colegio Central Universitario "Mariano Moreno"'>IPU - Colegio Central Universitario "Mariano Moreno"</option>
+            </select>
           </div>
         </div>
 
