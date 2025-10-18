@@ -12,6 +12,7 @@ export default defineConfig({
         mesas: resolve(__dirname, 'mesas.html'),
         sorteo: resolve(__dirname, 'sorteo.html'),
         manual: resolve(__dirname, 'manual.html'),
+        quien: resolve(__dirname, 'quien.html'),
       },
     },
   },

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interno – Invitados con aceptación</title>
+    <link rel="icon" type="image/webp" href="/src/assets/logo.webp" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste p-6">
+    <main class="max-w-6xl mx-auto bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
+      <header class="bg-azuloscuro text-crema py-6 px-6 flex items-center justify-between">
+        <h1 class="text-xl md:text-2xl font-bold">Panel interno</h1>
+        <div class="text-sm opacity-80">UNSJ · <span id="anio"></span></div>
+      </header>
+
+      <section class="p-6">
+        <div class="flex flex-col md:flex-row md:items-end gap-4 mb-4">
+          <div class="flex-1">
+            <label class="block text-sm text-gray-700 mb-1">Buscar (DNI / Nombre / Correo)</label>
+            <input id="search" type="text" placeholder="Buscar..." class="w-full rounded-lg border-gray-300 p-2 focus:ring-2 focus:ring-azuloscuro/40 focus:border-azuloscuro" />
+          </div>
+          <div>
+            <button id="btnExport" class="px-4 py-2 rounded-md bg-azuloscuro text-white hover:bg-azul transition">Exportar CSV</button>
+          </div>
+        </div>
+
+        <div id="totales" class="mb-3 text-azuloscuro font-semibold"></div>
+
+        <div class="overflow-x-auto border rounded-xl">
+          <table class="min-w-full text-sm">
+            <thead class="bg-crema/60">
+              <tr class="text-center">
+                <th class="p-3 text-azuloscuro">DNI</th>
+                <th class="p-3 text-azuloscuro">Nombre</th>
+                <th class="p-3 text-azuloscuro">Lugar</th>
+                <th class="p-3 text-azuloscuro">Común</th>
+                <th class="p-3 text-azuloscuro">Celíacos</th>
+                <th class="p-3 text-azuloscuro">Vegetarianos</th>
+                <th class="p-3 text-azuloscuro">Veganos</th>
+                <th class="p-3 text-azuloscuro">Total</th>
+                <th class="p-3 text-azuloscuro">Por planilla</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="/src/pages/quien.js"></script>
+  </body>
+</html>
