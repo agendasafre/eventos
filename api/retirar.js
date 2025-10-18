@@ -124,6 +124,7 @@ export default async function handler(req, res) {
         veganos: numVeganos,
         total,
         mesa_token: invitado.mesa_token,
+        es_manual: invitado.es_manual || false,
       };
       try {
         await fetch(SCRIPT_URL, {
