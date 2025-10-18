@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-import { JSConfetti } from 'https://cdn.jsdelivr.net/npm/js-confetti@0.12.0/dist/js-confetti.browser.js';
+import JSConfetti from 'https://cdn.jsdelivr.net/npm/js-confetti@0.12.0/dist/js-confetti.browser.js';
 import Swal from 'sweetalert2';
 
 // Protección simple por clave
