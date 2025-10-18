@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase.js';
-import { JSConfetti } from 'https://cdn.jsdelivr.net/npm/js-confetti@0.12.0/dist/js-confetti.browser.js';
+// Prefer global JSConfetti from UMD; fallback to dynamic import if not present
 import Swal from 'sweetalert2';
 
 // Protección simple por clave
@@ -51,8 +51,14 @@ const fanfare = new Audio(fanfareFile);
 drumroll.volume = 0.6;
 fanfare.volume = 0.8;
 
-// 🎊 Instancia de js-confetti
-const jsConfetti = new JSConfetti();
+// 🎊 Instancia de js-confetti desde global (inyectado por script en sorteo.html)
+const JSConfettiClass = window.JSConfetti || globalThis.JSConfetti;
+const jsConfetti = JSConfettiClass
+  ? new JSConfettiClass()
+  : {
+      addConfetti: () => {},
+      clearCanvas: () => {},
+    };
 
 const DURATION_MS = 4500;
 const TICK_MIN_MS = 45;
