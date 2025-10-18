@@ -144,7 +144,7 @@ export default async function handler(req, res) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            action: 'mail_registro',
+            action: 'mail_registro_manual',
             dni: upserted?.dni || '',
             nombre: upserted?.nombre || nombre,
             correo,
