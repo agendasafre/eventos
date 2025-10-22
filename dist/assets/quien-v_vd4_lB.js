@@ -1,4 +1,4 @@
-import{S as p}from"./sweetalert2.esm.all-GP8esQtv.js";import{s as b}from"./supabase-CFADINa5.js";const d="4",f=sessionStorage.getItem("internal_key"),i=(e,t=document)=>t.querySelector(e),m=i("#tbody"),v=i("#totales"),u=i("#search"),x=i("#btnExport");function a(e){const t=parseInt(e,10);return Number.isNaN(t)?0:t}function w(e){m.innerHTML="",e.forEach(t=>{const n=document.createElement("tr");n.className="odd:bg-white even:bg-crema/30",n.innerHTML=`
+import{S as p}from"./sweetalert2.esm.all-C9HRBEaT.js";import{s as b}from"./supabase-CFADINa5.js";const d="4",f=sessionStorage.getItem("internal_key"),i=(e,t=document)=>t.querySelector(e),m=i("#tbody"),v=i("#totales"),u=i("#search"),x=i("#btnExport");function a(e){const t=parseInt(e,10);return Number.isNaN(t)?0:t}function w(e){m.innerHTML="",e.forEach(t=>{const n=document.createElement("tr");n.className="odd:bg-white even:bg-crema/30",n.innerHTML=`
       <td class="p-3 whitespace-nowrap text-center text-azuloscuro">${t.dni||""}</td>
       <td class="p-3 text-azuloscuro">${t.nombre||""}</td>
       <td class="p-3 text-center text-azuloscuro">${t.lugar_trabajo||""}</td>
