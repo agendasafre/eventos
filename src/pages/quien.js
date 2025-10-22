@@ -55,7 +55,7 @@ function renderTotals(rows) {
 
 function toCSV(rows) {
   const header = [
-    'dni','nombre', 'lugar_trabajo','opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos','total', 'por_planilla'
+    'dni','nombre', 'lugar_trabajo','opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos','opciones_total', 'importe_total', 'cuotas', 'importe_cuota', 'por_planilla'
   ];
   const lines = [header.join(',')];
   rows.forEach((r) => {
@@ -68,6 +68,9 @@ function toCSV(rows) {
       formatInt(r.opciones_vegetarianos),
       formatInt(r.opciones_veganos),
       formatInt(r.opciones),
+      r.es_manual ? formatInt(r.opciones * 25000) : formatInt(r.opciones * 50000),
+      r.es_manual ? 3 : 4,
+      r.es_manual ? formatInt((r.opciones * 25000)/3) : formatInt((r.opciones * 50000)/4),
       r.es_manual ? 'No' : 'Si',
     ];
     const esc = (v) => {
