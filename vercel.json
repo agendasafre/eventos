@@ -1,10 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    },
+    { "source": "/", "destination": "/index.html" },
     {
       "source": "/retiro",
       "destination": "/retiro.html"
@@ -20,6 +17,10 @@
     {
       "source": "/manual",
       "destination": "/manual.html"
+    },
+    {
+      "source": "/retirados",
+      "destination": "/retirados.html"
     }
   ]
 }
