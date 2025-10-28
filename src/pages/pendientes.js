@@ -25,15 +25,15 @@ function renderRows(rows) {
     const tr = document.createElement('tr');
     tr.className = 'odd:bg-white even:bg-crema/30';
     tr.innerHTML = `
-      <td class="p-3 whitespace-nowrap">${r.dni || ''}</td>
-      <td class="p-3">${r.nombre || ''}</td>
-      <td class="p-3">${r.correo || ''}</td>
-      <td class="p-3">${r.lugar_trabajo || ''}</td>
-      <td class="p-3 text-right">${int(r.opciones_comun)}</td>
-      <td class="p-3 text-right">${int(r.opciones_celiacos)}</td>
-      <td class="p-3 text-right">${int(r.opciones_vegetarianos)}</td>
-      <td class="p-3 text-right">${int(r.opciones_veganos)}</td>
-      <td class="p-3 text-right font-semibold">${rowTotal(r)}</td>
+      <td class="p-3 whitespace-nowrap text-azuloscuro">${r.dni || ''}</td>
+      <td class="p-3 text-azuloscuro">${r.nombre || ''}</td>
+      <td class="p-3 text-azuloscuro">${r.correo || ''}</td>
+      <td class="p-3 text-azuloscuro">${r.lugar_trabajo || ''}</td>
+      <td class="p-3 text-center text-azuloscuro">${int(r.opciones_comun)}</td>
+      <td class="p-3 text-center text-azuloscuro">${int(r.opciones_celiacos)}</td>
+      <td class="p-3 text-center text-azuloscuro">${int(r.opciones_vegetarianos)}</td>
+      <td class="p-3 text-center text-azuloscuro">${int(r.opciones_veganos)}</td>
+      <td class="p-3 text-center font-semibold text-azuloscuro">${rowTotal(r)}</td>
     `;
     tbody.appendChild(tr);
   });
