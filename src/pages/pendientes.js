@@ -34,6 +34,9 @@ function renderRows(rows) {
       <td class="p-3 text-center text-azuloscuro">${int(r.opciones_vegetarianos)}</td>
       <td class="p-3 text-center text-azuloscuro">${int(r.opciones_veganos)}</td>
       <td class="p-3 text-center font-semibold text-azuloscuro">${rowTotal(r)}</td>
+      <td class="p-3 text-center">
+        <button class="btnResend bg-azuloscuro text-white px-3 py-1 rounded-md hover:bg-azul" data-dni="${r.dni || ''}" data-correo="${r.correo || ''}">Reenviar</button>
+      </td>
     `;
     tbody.appendChild(tr);
   });
@@ -137,6 +140,56 @@ async function init() {
       renderRows(filtered);
       renderTotals(filtered);
     };
+    // Delegación para botón Reenviar
+    tbody.addEventListener('click', async (e) => {
+      const btn = e.target.closest('.btnResend');
+      if (!btn) return;
+      const dni = btn.getAttribute('data-dni');
+      const correoActual = btn.getAttribute('data-correo') || '';
+
+      const { value: nuevoCorreo } = await Swal.fire({
+        title: 'Reenviar correo de registro',
+        input: 'email',
+        inputLabel: 'Correo del invitado',
+        inputValue: correoActual,
+        confirmButtonText: 'Reenviar',
+        showCancelButton: true,
+        inputValidator: (v) => (!/\S+@\S+\.\S+/.test(v) ? 'Ingresá un correo válido' : undefined),
+      });
+      if (!nuevoCorreo) return;
+
+      try {
+        // Mostrar loading mientras se envía
+        Swal.fire({
+          title: 'Reenviando correo…',
+          text: 'Por favor, esperá un momento.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
+        const resp = await fetch('/api/reenviar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(ACCESS_KEY ? { 'x-internal-key': ACCESS_KEY } : {}),
+          },
+          body: JSON.stringify({ tipo: 'registro', dni, correo: nuevoCorreo }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || 'No se pudo reenviar');
+        Swal.close();
+        await Swal.fire({ icon: 'success', title: 'Enviado', text: 'Correo reenviado correctamente.' });
+        // Actualizar en memoria y re-render
+        rows = rows.map((r) => (String(r.dni) === String(dni) ? { ...r, correo: nuevoCorreo } : r));
+        rerender();
+      } catch (err) {
+        Swal.close();
+        console.error(err);
+        await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Falló el reenvío' });
+      }
+    });
     searchInput.addEventListener('input', rerender);
     btnExport.addEventListener('click', () => {
       const filtered = applyFilter(rows, searchInput.value || '');
