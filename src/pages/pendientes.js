@@ -34,8 +34,7 @@ function renderRows(rows) {
       <td class="p-3 text-center text-azuloscuro">${int(r.opciones_vegetarianos)}</td>
       <td class="p-3 text-center text-azuloscuro">${int(r.opciones_veganos)}</td>
       <td class="p-3 text-center font-semibold text-azuloscuro">${rowTotal(r)}</td>
-      <td class="p-3 text-center flex gap-2 justify-center">
-        <button class="btnEditEmail bg-yellow-500 text-white px-3 py-1 rounded-md hover:bg-yellow-600" data-dni="${r.dni || ''}" data-correo="${r.correo || ''}">Editar correo</button>
+      <td class="p-3 text-center">
         <button class="btnResend bg-azuloscuro text-white px-3 py-1 rounded-md hover:bg-azul" data-dni="${r.dni || ''}" data-correo="${r.correo || ''}">Reenviar</button>
       </td>
     `;
@@ -141,79 +140,42 @@ async function init() {
       renderRows(filtered);
       renderTotals(filtered);
     };
-    // Delegación para botón Editar correo y Reenviar
+    // Delegación para botón Reenviar
     tbody.addEventListener('click', async (e) => {
-      const btnResend = e.target.closest('.btnResend');
-      const btnEdit = e.target.closest('.btnEditEmail');
-      if (!btnResend && !btnEdit) return;
+      const btn = e.target.closest('.btnResend');
+      if (!btn) return;
+      const dni = btn.getAttribute('data-dni');
+      const correoActual = btn.getAttribute('data-correo') || '';
 
-      const target = btnResend || btnEdit;
-      const dni = target.getAttribute('data-dni');
-      const correoActual = target.getAttribute('data-correo') || '';
+      const { value: nuevoCorreo } = await Swal.fire({
+        title: 'Reenviar correo de registro',
+        input: 'email',
+        inputLabel: 'Correo del invitado',
+        inputValue: correoActual,
+        confirmButtonText: 'Reenviar',
+        showCancelButton: true,
+        inputValidator: (v) => (!/\S+@\S+\.\S+/.test(v) ? 'Ingresá un correo válido' : undefined),
+      });
+      if (!nuevoCorreo) return;
 
-      if (btnEdit) {
-        const { value: nuevoCorreo } = await Swal.fire({
-          title: 'Editar correo',
-          input: 'email',
-          inputLabel: 'Nuevo correo del invitado',
-          inputValue: correoActual,
-          confirmButtonText: 'Guardar',
-          showCancelButton: true,
-          inputValidator: (v) => (!/\S+@\S+\.\S+/.test(v) ? 'Ingresá un correo válido' : undefined),
+      try {
+        const resp = await fetch('/api/reenviar', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(ACCESS_KEY ? { 'x-internal-key': ACCESS_KEY } : {}),
+          },
+          body: JSON.stringify({ tipo: 'registro', dni, correo: nuevoCorreo }),
         });
-        if (!nuevoCorreo || nuevoCorreo === correoActual) return;
-
-        try {
-          const resp = await fetch('/api/actualizar-correo', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(ACCESS_KEY ? { 'x-internal-key': ACCESS_KEY } : {}),
-            },
-            body: JSON.stringify({ dni, correo: nuevoCorreo }),
-          });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error || 'No se pudo actualizar');
-          await Swal.fire({ icon: 'success', title: 'Actualizado', text: 'Correo actualizado.' });
-          rows = rows.map((r) => (String(r.dni) === String(dni) ? { ...r, correo: nuevoCorreo } : r));
-          rerender();
-        } catch (err) {
-          console.error(err);
-          await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Falló la actualización' });
-        }
-        return;
-      }
-
-      if (btnResend) {
-        const { value: nuevoCorreo } = await Swal.fire({
-          title: 'Reenviar correo de registro',
-          input: 'email',
-          inputLabel: 'Correo del invitado',
-          inputValue: correoActual,
-          confirmButtonText: 'Reenviar',
-          showCancelButton: true,
-          inputValidator: (v) => (!/\S+@\S+\.\S+/.test(v) ? 'Ingresá un correo válido' : undefined),
-        });
-        if (!nuevoCorreo) return;
-
-        try {
-          const resp = await fetch('/api/reenviar', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(ACCESS_KEY ? { 'x-internal-key': ACCESS_KEY } : {}),
-            },
-            body: JSON.stringify({ tipo: 'registro', dni, correo: nuevoCorreo }),
-          });
-          const data = await resp.json();
-          if (!resp.ok) throw new Error(data?.error || 'No se pudo reenviar');
-          await Swal.fire({ icon: 'success', title: 'Enviado', text: 'Correo reenviado correctamente.' });
-          rows = rows.map((r) => (String(r.dni) === String(dni) ? { ...r, correo: nuevoCorreo } : r));
-          rerender();
-        } catch (err) {
-          console.error(err);
-          await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Falló el reenvío' });
-        }
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data?.error || 'No se pudo reenviar');
+        await Swal.fire({ icon: 'success', title: 'Enviado', text: 'Correo reenviado correctamente.' });
+        // Actualizar en memoria y re-render
+        rows = rows.map((r) => (String(r.dni) === String(dni) ? { ...r, correo: nuevoCorreo } : r));
+        rerender();
+      } catch (err) {
+        console.error(err);
+        await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Falló el reenvío' });
       }
     });
     searchInput.addEventListener('input', rerender);
