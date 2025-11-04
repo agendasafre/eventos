@@ -159,6 +159,16 @@ async function init() {
       if (!nuevoCorreo) return;
 
       try {
+        // Mostrar loading mientras se envía
+        Swal.fire({
+          title: 'Reenviando correo…',
+          text: 'Por favor, esperá un momento.',
+          allowOutsideClick: false,
+          didOpen: () => {
+            Swal.showLoading();
+          },
+        });
+
         const resp = await fetch('/api/reenviar', {
           method: 'POST',
           headers: {
@@ -169,11 +179,13 @@ async function init() {
         });
         const data = await resp.json();
         if (!resp.ok) throw new Error(data?.error || 'No se pudo reenviar');
+        Swal.close();
         await Swal.fire({ icon: 'success', title: 'Enviado', text: 'Correo reenviado correctamente.' });
         // Actualizar en memoria y re-render
         rows = rows.map((r) => (String(r.dni) === String(dni) ? { ...r, correo: nuevoCorreo } : r));
         rerender();
       } catch (err) {
+        Swal.close();
         console.error(err);
         await Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Falló el reenvío' });
       }
