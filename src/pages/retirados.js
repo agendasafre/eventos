@@ -80,7 +80,7 @@ function applyFilter(rows, q) {
 
 function toCSV(rows, pulserasMap) {
   const header = [
-    'dni','nombre','opciones_total','pulseras'
+    'dni','nombre','opciones_total','pulseras','importe_total','cuotas','importe_cuota','por_planilla'
   ];
   const lines = [header.join(',')];
   const esc = (v) => {
@@ -90,11 +90,20 @@ function toCSV(rows, pulserasMap) {
   rows.forEach((r) => {
     const pul = pulserasMap?.get(String(r.dni || '')) || [];
     const pulStr = pul.length ? pul.map((n) => `#${n}`).join(' ') : '';
+    const opciones = i(r.opciones);
+    const esManual = !!r.es_manual;
+    const importeTotal = esManual ? i(opciones * 25000) : i(opciones * 50000);
+    const cuotas = esManual ? 3 : 4;
+    const importeCuota = esManual ? i((opciones * 25000) / 3) : i((opciones * 50000) / 4);
     const vals = [
       r.dni || '',
       r.nombre || '',
-      i(r.opciones),
+      opciones,
       pulStr,
+      importeTotal,
+      cuotas,
+      importeCuota,
+      esManual ? 'No' : 'Si',
     ];
     lines.push(vals.map(esc).join(','));
   });
@@ -106,7 +115,7 @@ function toCSV(rows, pulserasMap) {
 async function loadData() {
   const { data, error } = await supabase
     .from('invitados')
-    .select('dni, nombre, opciones')
+    .select('dni, nombre, opciones, es_manual')
     .eq('retiro', true)
     .order('dni', { ascending: true });
   if (error) throw error;

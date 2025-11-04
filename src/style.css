@@ -62,7 +62,6 @@ body.sorteo {
   position: relative;
   width: min(900px, 92vw);
   height: clamp(80px, 10vw, 120px);
-  margin-top: clamp(18px, 3vh, 30px);
   border-radius: 14px;
   background: rgba(255, 255, 255, 0.12);
   backdrop-filter: blur(6px);
