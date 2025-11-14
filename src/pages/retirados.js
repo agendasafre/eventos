@@ -80,7 +80,8 @@ function applyFilter(rows, q) {
 
 function toCSV(rows, pulserasMap) {
   const header = [
-    'dni','nombre','opciones_total','pulseras','importe_total','cuotas','importe_cuota','por_planilla'
+    'dni','nombre','opciones_total','pulseras','importe_total','cuotas','importe_cuota','por_planilla',
+    'opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos'
   ];
   const lines = [header.join(',')];
   const esc = (v) => {
@@ -90,20 +91,26 @@ function toCSV(rows, pulserasMap) {
   rows.forEach((r) => {
     const pul = pulserasMap?.get(String(r.dni || '')) || [];
     const pulStr = pul.length ? pul.map((n) => `#${n}`).join(' ') : '';
-    const opciones = i(r.opciones);
+    const totalOpc = i(r.opciones);
     const esManual = !!r.es_manual;
-    const importeTotal = esManual ? i(opciones * 25000) : i(opciones * 50000);
+    const importeTotal = totalOpc * (esManual ? 25000 : 50000);
     const cuotas = esManual ? 3 : 4;
-    const importeCuota = esManual ? i((opciones * 25000) / 3) : i((opciones * 50000) / 4);
+    const importeCuota = Math.round(importeTotal / cuotas);
+    const porPlanilla = esManual ? 'No' : 'Si';
+
     const vals = [
       r.dni || '',
       r.nombre || '',
-      opciones,
+      totalOpc,
       pulStr,
       importeTotal,
       cuotas,
       importeCuota,
-      esManual ? 'No' : 'Si',
+      porPlanilla,
+      i(r.opciones_comun),
+      i(r.opciones_celiacos),
+      i(r.opciones_vegetarianos),
+      i(r.opciones_veganos),
     ];
     lines.push(vals.map(esc).join(','));
   });
@@ -115,7 +122,7 @@ function toCSV(rows, pulserasMap) {
 async function loadData() {
   const { data, error } = await supabase
     .from('invitados')
-    .select('dni, nombre, opciones, es_manual')
+    .select('dni, nombre, opciones, opciones_comun, opciones_celiacos, opciones_vegetarianos, opciones_veganos, es_manual')
     .eq('retiro', true)
     .order('dni', { ascending: true });
   if (error) throw error;
