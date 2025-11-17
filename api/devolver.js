@@ -40,7 +40,7 @@ export default async function handler(req, res) {
     }
 
     const ids = entregadas.map((e) => e.id);
-
+//just a commet to deploy
     // 3) Revertir entradas (volver a disponibles)
     const { error: errRevert } = await supabase
       .from('entradas')
