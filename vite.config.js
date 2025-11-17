@@ -15,6 +15,7 @@ export default defineConfig({
         quien: resolve(__dirname, 'quien.html'),
         retirados: resolve(__dirname, 'retirados.html'),
         pendientes: resolve(__dirname, 'pendientes.html'),
+        devolver: resolve(__dirname, 'devolver.html'),
       },
     },
   },

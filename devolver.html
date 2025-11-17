@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Devolución de Entradas – Cena UNSJ</title>
+    <link rel="icon" type="image/webp" href="/src/assets/logo.webp" />
+    <link rel="stylesheet" href="/src/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </head>
+  <body class="min-h-screen bg-gradient-to-br from-azuloscuro via-azul to-celeste p-6">
+    <div id="appNav"></div>
+    <header class="text-center mb-6">
+      <img src="/src/assets/logo-blanco.webp" alt="Logo UNSJ" class="w-20 mx-auto mb-3" />
+      <h1 class="text-2xl md:text-3xl font-bold text-crema">Devolución de entradas</h1>
+      <p class="text-celeste mt-1">Ingresá un DNI y revisá pulseras a devolver</p>
+    </header>
+
+    <main class="bg-white/95 rounded-2xl shadow-lg max-w-xl mx-auto p-6">
+      <div class="space-y-4">
+        <div>
+          <label for="dni" class="block text-sm font-semibold text-azuloscuro mb-1">DNI</label>
+          <input id="dni" type="text" maxlength="10" placeholder="Ej: 12345678" class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-azuloscuro/50 focus:border-azuloscuro text-azuloscuro" />
+        </div>
+
+        <div id="info" class="hidden space-y-3">
+          <div>
+            <span class="text-sm text-gray-600">Invitado:</span>
+            <div id="nombre" class="text-azuloscuro font-semibold"></div>
+          </div>
+
+          <div id="pulserasBox" class="hidden bg-celeste/20 rounded-lg p-3">
+            <div class="text-azuloscuro font-semibold mb-2">Pulseras entregadas</div>
+            <div id="pulseras" class="flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="pt-2">
+            <button id="btnDevolver" class="px-4 py-2 rounded-lg bg-azuloscuro text-white hover:bg-azul disabled:opacity-50" disabled>
+              Registrar devolución
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <footer class="text-center text-gray-600 text-sm mt-6">UNSJ – <span id="anio"></span></footer>
+    </main>
+
+    <script type="module" src="/src/components/nav.js"></script>
+    <script type="module" src="/src/pages/devolver.js"></script>
+  </body>
+</html>

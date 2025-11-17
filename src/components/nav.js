@@ -8,6 +8,7 @@ if (mountPoint) {
   const links = [
     { href: '/index.html', label: 'Inicio' },
     { href: '/retiro.html', label: 'Retiro' },
+    { href: '/devolver.html', label: 'Devolver' },
     { href: '/retirados.html', label: 'Retiraron' },
     { href: '/pendientes.html', label: 'Pendientes de retiro' },
     { href: '/manual.html', label: 'Pasantes/Contratados' },

@@ -21,6 +21,10 @@
     {
       "source": "/retirados",
       "destination": "/retirados.html"
+    },
+    {
+      "source": "/devolver",
+      "destination": "/devolver.html"
     }
   ]
 }
