@@ -52,15 +52,22 @@ export default async function handler(req, res) {
 
     const numeros = entregadas.map((e) => e.numero).sort((a, b) => (a ?? 0) - (b ?? 0));
 
-    // 4) Actualizar invitado: marcar estado devuelto y mantener retiro=true para bloquear re-registro
+    // 4) Liberar asientos elegidos (si los tuviera)
+    const { error: errDelSeats } = await supabase
+      .from('mesa_asientos')
+      .delete()
+      .eq('invitado_id', invitado.id);
+    if (errDelSeats) throw errDelSeats;
+
+    // 5) Actualizar invitado: marcar estado devuelto y bloquear re-selección de asiento (anulamos mesa_token)
     const { error: errUpdInv } = await supabase
       .from('invitados')
-      .update({ estado: 'devuelto' })
+      .update({ estado: 'devuelto', mesa_token: null })
       .eq('id', invitado.id);
 
     if (errUpdInv) throw errUpdInv;
 
-    // 5) Notificación por Apps Script (opcional, no bloqueante)
+    // 6) Notificación por Apps Script (opcional, no bloqueante)
     if (SCRIPT_URL) {
       const payload = {
         action: 'mail_devolucion',
