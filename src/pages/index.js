@@ -5,7 +5,7 @@ import { ui } from '../ui.js';
 const ENDPOINT = import.meta.env.DEV
   ? 'https://cena-unsj.vercel.app/api/register'
   : '/api/register';
-const FECHA_LIMITE = new Date('2025-12-02T23:59:59');
+const FECHA_LIMITE = new Date('2025-12-05T23:59:59');
 
 const $ = (sel, parent = document) => parent.querySelector(sel);
 
