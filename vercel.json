@@ -26,5 +26,10 @@
       "source": "/devolver",
       "destination": "/devolver.html"
     }
+    ,
+    {
+      "source": "/pulseras",
+      "destination": "/pulseras.html"
+    }
   ]
 }

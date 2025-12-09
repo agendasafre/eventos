@@ -10,6 +10,7 @@ if (mountPoint) {
     { href: '/retiro.html', label: 'Retiro' },
     { href: '/devolver.html', label: 'Devolver' },
     { href: '/retirados.html', label: 'Retiraron' },
+    { href: '/pulseras.html', label: 'Pulseras' },
     { href: '/pendientes.html', label: 'Pendientes de retiro' },
     { href: '/manual.html', label: 'Pasantes/Contratados' },
     { href: '/quien.html', label: 'Registrados' },
