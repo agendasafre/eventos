@@ -96,6 +96,7 @@ export default async function handler(req, res) {
         vegetarianos,
         veganos,
         total,
+        ...(invitado.es_manual ? { mesa_token: invitado.mesa_token } : {}),
       };
     } else if (tipo === 'retiro') {
       // Obtener pulseras ya entregadas

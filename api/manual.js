@@ -153,6 +153,7 @@ export default async function handler(req, res) {
             vegetarianos: numVegetarianos,
             veganos: numVeganos,
             total,
+            mesa_token: upserted?.mesa_token || mesa_token,
           }),
         });
       } catch (mailErr) {
