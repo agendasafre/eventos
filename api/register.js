@@ -31,8 +31,8 @@ export default async function handler(req, res) {
     return res.status(400).send('Debés seleccionar al menos un menú.');
   }
 
-  // Límite de tiempo (extendido una semana)
-  const limite = new Date('2025-12-05T23:59:59');
+  // Cierre de inscripción, hora de Argentina (UTC-3).
+  const limite = new Date('2026-11-30T23:59:59-03:00');
   if (new Date() > limite) {
     return res.status(403).send('El período de registro ha finalizado.');
   }

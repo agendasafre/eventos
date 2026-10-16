@@ -1,0 +1,20 @@
+import{S as d}from"./sweetalert2.esm.all-BUFxkijx.js";import"./nav-C6RC9MV_.js";import{s as f}from"./supabase-DDv81zF4.js";import{c as v}from"./precios-BehGIKLY.js";const m="4",x=sessionStorage.getItem("internal_key"),i=(e,t=document)=>t.querySelector(e),_=i("#tbody"),w=i("#totales"),p=i("#search"),C=i("#btnExport");function a(e){const t=parseInt(e,10);return Number.isNaN(t)?0:t}function $(e){_.innerHTML="",e.forEach(t=>{const n=document.createElement("tr");n.className="odd:bg-white even:bg-crema/30",n.innerHTML=`
+      <td class="p-3 whitespace-nowrap text-center text-azuloscuro">${t.dni||""}</td>
+      <td class="p-3 text-azuloscuro">${t.nombre||""}</td>
+      <td class="p-3 text-center text-azuloscuro">${t.lugar_trabajo||""}</td>
+      <td class="p-3 text-center text-azuloscuro">${a(t.opciones_comun)}</td>
+      <td class="p-3 text-center text-azuloscuro">${a(t.opciones_celiacos)}</td>
+      <td class="p-3 text-center text-azuloscuro">${a(t.opciones_vegetarianos)}</td>
+      <td class="p-3 text-center text-azuloscuro">${a(t.opciones_veganos)}</td>
+      <td class="p-3 text-center text-azuloscuro font-semibold">${a(t.opciones)}</td>
+      <td class="p-3 text-center text-azuloscuro">${t.es_manual?"No":"Si"}</td>
+    `,_.appendChild(n)})}function S(e){const t=e.reduce((s,c)=>s+a(c.opciones_comun),0),n=e.reduce((s,c)=>s+a(c.opciones_celiacos),0),o=e.reduce((s,c)=>s+a(c.opciones_vegetarianos),0),r=e.reduce((s,c)=>s+a(c.opciones_veganos),0),l=e.reduce((s,c)=>s+a(c.opciones),0);w.innerHTML=`
+    <div class="flex flex-wrap gap-3 items-center">
+      <span>Total Comun: <b>${t}</b></span>
+      <span>· Celíacos: <b>${n}</b></span>
+      <span>· Vegetarianos: <b>${o}</b></span>
+      <span>· Veganos: <b>${r}</b></span>
+      <span class="ml-auto">Total general: <b>${l}</b></span>
+    </div>
+  `}function h(e){const n=[["dni","nombre","lugar_trabajo","opciones_comun","opciones_celiacos","opciones_vegetarianos","opciones_veganos","opciones_total","importe_total","cuotas","importe_cuota","por_planilla","importe_ultima_cuota"].join(",")];return e.forEach(o=>{const r=v(o.opciones,o.es_manual),l=[o.dni||"",o.nombre||"",o.lugar_trabajo||"",a(o.opciones_comun),a(o.opciones_celiacos),a(o.opciones_vegetarianos),a(o.opciones_veganos),a(o.opciones),r.importeTotal,r.cuotas,r.importeCuota.toFixed(2),o.es_manual?"No":"Si",r.importeUltimaCuota.toFixed(2)],s=c=>{const u=String(c).replaceAll('"','""');return/[",\n]/.test(u)?`"${u}"`:u};n.push(l.map(s).join(","))}),n.join(`
+`)}function L(e,t){const n=new Blob([t],{type:"text/csv;charset=utf-8;"}),o=URL.createObjectURL(n),r=document.createElement("a");r.href=o,r.download=e,r.click(),URL.revokeObjectURL(o)}function g(e,t){const n=t.trim().toLowerCase();return n?e.filter(o=>String(o.dni||"").toLowerCase().includes(n)||String(o.nombre||"").toLowerCase().includes(n)||String(o.correo||"").toLowerCase().includes(n)):e}async function E(){const{data:e,error:t}=await f.from("invitados").select("dni, nombre, lugar_trabajo, opciones_comun, opciones_celiacos, opciones_vegetarianos, opciones_veganos, acepto_terminos, opciones, es_manual").eq("acepto_terminos",!0).order("dni",{ascending:!0});if(t)throw t;return e||[]}async function b(){if(x===m)return!0;const{value:e}=await d.fire({title:"Acceso restringido",input:"password",inputLabel:"Ingresá la clave de acceso",inputPlaceholder:"••••••",confirmButtonText:"Entrar",background:"#f1faee",color:"#1d3557",allowOutsideClick:!1});return e===m?(sessionStorage.setItem("internal_key",e),!0):(await d.fire({icon:"error",title:"Clave incorrecta",text:"No tenés autorización para acceder."}),b())}async function y(){i("#anio").textContent=new Date().getFullYear(),await b();try{let e=await E();const t=()=>{const n=g(e,p.value||"");$(n),S(n)};p.addEventListener("input",t),C.addEventListener("click",()=>{const n=g(e,p.value||""),o=h(n);L(`invitados_aceptados_${new Date().toISOString().slice(0,10)}.csv`,o)}),t()}catch(e){console.error(e),await d.fire({icon:"error",title:"Error",text:"No se pudieron cargar los datos."})}}y();

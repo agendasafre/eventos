@@ -1,13 +1,15 @@
 import { supabase } from '../lib/supabase.js';
 import { post } from '../lib/api.js';
 import { ui } from '../ui.js';
+import { PRECIO_ENTRADA } from '../lib/precios.js';
 
 const ENDPOINT = import.meta.env.DEV
   ? 'https://cena-unsj.vercel.app/api/register'
   : '/api/register';
-const FECHA_LIMITE = new Date('2025-12-05T23:59:59');
+const FECHA_LIMITE = new Date('2026-11-30T23:59:59-03:00');
 
 const $ = (sel, parent = document) => parent.querySelector(sel);
+$('#precioEntrada').textContent = `$${PRECIO_ENTRADA.toLocaleString('es-AR')}`;
 
 // Elementos
 const form = $('#form');

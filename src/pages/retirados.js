@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase.js';
 import Swal from 'sweetalert2';
+import { calcularPago } from '../lib/precios.js';
 
 const ACCESS_KEY = import.meta.env.VITE_INTERNAL_KEY;
 const storedKey = sessionStorage.getItem('internal_key');
@@ -81,7 +82,7 @@ function applyFilter(rows, q) {
 function toCSV(rows, pulserasMap) {
   const header = [
     'dni','nombre','opciones_total','pulseras','importe_total','cuotas','importe_cuota','por_planilla',
-    'opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos'
+    'opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos','importe_ultima_cuota'
   ];
   const lines = [header.join(',')];
   const esc = (v) => {
@@ -93,9 +94,7 @@ function toCSV(rows, pulserasMap) {
     const pulStr = pul.length ? pul.map((n) => `#${n}`).join(' ') : '';
     const totalOpc = i(r.opciones);
     const esManual = !!r.es_manual;
-    const importeTotal = totalOpc * (esManual ? 25000 : 50000);
-    const cuotas = esManual ? 3 : 4;
-    const importeCuota = Math.round(importeTotal / cuotas);
+    const { importeTotal, cuotas, importeCuota, importeUltimaCuota } = calcularPago(totalOpc, esManual);
     const porPlanilla = esManual ? 'No' : 'Si';
 
     const vals = [
@@ -105,12 +104,13 @@ function toCSV(rows, pulserasMap) {
       pulStr,
       importeTotal,
       cuotas,
-      importeCuota,
+      importeCuota.toFixed(2),
       porPlanilla,
       i(r.opciones_comun),
       i(r.opciones_celiacos),
       i(r.opciones_vegetarianos),
       i(r.opciones_veganos),
+      importeUltimaCuota.toFixed(2),
     ];
     lines.push(vals.map(esc).join(','));
   });

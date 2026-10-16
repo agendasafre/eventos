@@ -1,0 +1,1 @@
+const n=8e4;function s(a,c=!1){const C=c?7e4:8e4,t=(parseInt(a,10)||0)*C,A=t*100,o=Math.round(A/3);return{importeTotal:t,cuotas:3,importeCuota:o/100,importeUltimaCuota:(A-o*2)/100}}export{n as P,s as c};

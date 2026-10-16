@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase.js';
 import Swal from 'sweetalert2';
+import { calcularPago } from '../lib/precios.js';
 
 const ACCESS_KEY = import.meta.env.VITE_INTERNAL_KEY;
 const storedKey = sessionStorage.getItem('internal_key');
@@ -55,10 +56,11 @@ function renderTotals(rows) {
 
 function toCSV(rows) {
   const header = [
-    'dni','nombre', 'lugar_trabajo','opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos','opciones_total', 'importe_total', 'cuotas', 'importe_cuota', 'por_planilla'
+    'dni','nombre', 'lugar_trabajo','opciones_comun','opciones_celiacos','opciones_vegetarianos','opciones_veganos','opciones_total', 'importe_total', 'cuotas', 'importe_cuota', 'por_planilla', 'importe_ultima_cuota'
   ];
   const lines = [header.join(',')];
   rows.forEach((r) => {
+    const pago = calcularPago(r.opciones, r.es_manual);
     const vals = [
       r.dni || '',
       r.nombre || '',
@@ -68,10 +70,11 @@ function toCSV(rows) {
       formatInt(r.opciones_vegetarianos),
       formatInt(r.opciones_veganos),
       formatInt(r.opciones),
-      r.es_manual ? formatInt(r.opciones * 25000) : formatInt(r.opciones * 50000),
-      r.es_manual ? 3 : 4,
-      r.es_manual ? formatInt((r.opciones * 25000)/3) : formatInt((r.opciones * 50000)/4),
+      pago.importeTotal,
+      pago.cuotas,
+      pago.importeCuota.toFixed(2),
       r.es_manual ? 'No' : 'Si',
+      pago.importeUltimaCuota.toFixed(2),
     ];
     const esc = (v) => {
       const s = String(v).replaceAll('"', '""');
