@@ -1,6 +1,6 @@
 export const PRECIO_ENTRADA = 80000;
 export const PRECIO_ENTRADA_MANUAL = 70000;
-export const CANTIDAD_CUOTAS = 3;
+export const CANTIDAD_CUOTAS = 4;
 
 export function calcularPago(cantidad, esManual = false) {
   const precio = esManual ? PRECIO_ENTRADA_MANUAL : PRECIO_ENTRADA;
