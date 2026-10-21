@@ -53,6 +53,7 @@ export default async function handler(req, res) {
       .from('entradas')
       .select('id, numero')
       .eq('entregado', false)
+      .gte('numero', 172)
       .order('numero', { ascending: true })
       .limit(total);
 
