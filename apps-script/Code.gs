@@ -28,7 +28,7 @@ const MENSAJES = {
   descuentoNormal:
     "Recordá que las cuotas serán descontadas por planilla de haberes.",
   descuentoManual:
-    "Recordá que las cuotas serán descontadas del pago.",
+    "Al registrarte, aceptaste los siguientes términos: el descuento se realizará en 4 cuotas. En caso de que no se prorrogue el contrato o la pasantía, el descuento se practicará íntegramente contra el pago de diciembre.",
   pie:
     "Este correo fue generado automáticamente. Por favor, no respondas a este mensaje.",
   fiesta:

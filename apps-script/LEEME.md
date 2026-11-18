@@ -4,6 +4,8 @@
 
 El registro manual recibe `mesa_token` desde `/api/manual` o `/api/reenviar` e incluye el botón «Gestionar asiento/s». El enlace usa `APP_URL` y la ruta `/mesas?token=…`. El registro normal conserva su correo sin ese botón. Si no se recibe token, el botón se omite.
 
+El formulario `/manual` informa que, al enviarlo, se aceptan los términos del descuento: 4 cuotas y, si no se prorroga el contrato o la pasantía, descuento íntegro contra el pago de diciembre. Los correos de registro y retiro manuales recuerdan esa aceptación; los reenvíos de registro manual usan el mismo texto. Para que la leyenda aparezca en los correos, también es necesario publicar una nueva versión de `Code.gs` siguiendo los pasos de abajo.
+
 ## Publicar
 
 1. Abrir el proyecto correspondiente en Google Apps Script y reemplazar el contenido de su archivo de código por `Code.gs`. Evitar dejar copias de las mismas funciones y constantes en otros archivos del proyecto.
